@@ -1,0 +1,239 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bp-modeli-podataka</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#modeli-podataka">Modeli podataka</a>
+<ul>
+<li><a href="#entitet-i-klasa-entiteta">Entitet i klasa entiteta</a></li>
+<li><a href="#nastavak-o-er-dijagramu-u-sledecem-fajlu">nastavak o er dijagramu u sledecem fajlu</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="modeli-podataka">Modeli podataka</h1>
+<h2 id="entitet-i-klasa-entiteta">Entitet i klasa entiteta</h2>
+<h3 id="entity-relationship-data-model">Entity-Relationship data model</h3>
+<p><strong>Osnovni pojmovi ER modela</strong></p>
+<ul>
+<li>obeležje i domen</li>
+<li>tip entiteta i pojava tipa entiteta</li>
+<li>tip poveznika i pojava tipa poveznika</li>
+</ul>
+<hr>
+<h3 id="entitet">Entitet</h3>
+<p><strong>Entitet</strong> je bilo šta u realnom svetu što posmatramo i o čemu čuvamo podatke.</p>
+<ul>
+<li>jedan konkretan “objekat” iz stvarnosti</li>
+<li>npr. <strong>student Ana Sinđić</strong>, <strong>projekat X25</strong>, <strong>radnik br. 101</strong></li>
+</ul>
+<h3 id="klasa-realnih-entiteta">Klasa realnih entiteta</h3>
+<p><strong>Klasa</strong> je skup sličnih entiteta koji dele neko zajedničko svojstvo.</p>
+<ul>
+<li>npr. <strong>svi studenti</strong>, <strong>svi projekti</strong>, <strong>svi radnici</strong></li>
+</ul>
+<p>Formalno: <code>E = {ei | P(ei)}</code> — što znači:</p>
+<blockquote>
+<p>“E je skup svih entiteta ei koji zadovoljavaju uslov P”</p>
+</blockquote>
+<p>npr. <code>Studenti = {svi ei koji su upisani na fakultet}</code></p>
+<p><strong>Analogija:</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Pojam</th>
+<th>Analogija</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entitet</td>
+<td>Konkretan objekat (<code>new Student("Ana")</code>)</td>
+</tr>
+<tr>
+<td>Klasa entiteta</td>
+<td>Klasa u OOP-u (<code>class Student</code>)</td>
+</tr>
+</tbody>
+</table><p><strong>entitet = jedan konkretan primerak</strong>, <strong>klasa = šablon/grupa</strong> kojoj taj primerak pripada.</p>
+<hr>
+<h3 id="poveznik-veza">Poveznik (veza)</h3>
+<p>Poveznik predstavlja <strong>odnos između entiteta</strong> - npr. radnik radi na projektu.</p>
+<h3 id="klasa-poveznika">Klasa poveznika</h3>
+<p>Kao što klasa entiteta grupira slične entitete, <strong>klasa poveznika</strong> grupuje slične veze.</p>
+<p><code>S = {(e1, e2) | P(e1, e2)}</code></p>
+<hr>
+<h3 id="primeri">Primeri:</h3>
+<p><strong>Klasa poveznika <code>Radi</code>:</strong></p>
+<ul>
+<li>
+<p>P(ei, ej) ::= “Radnik ei radi na radnom mestu ej”</p>
+</li>
+<li>
+<p>Radi = {(Ana, Programer), (Aco, Projektant), (Eva, Operater)}</p>
+</li>
+</ul>
+<p><strong>Dve klase poveznika između istih entiteta:</strong></p>
+<ul>
+<li>
+<p>P1(ei, ej) ::= “Radnik ei radi na projektu ej”<br>
+→ Radi = {(Ana, Lido), (Aco, Lido), (Aco, Osig)}</p>
+</li>
+<li>
+<p>nP2(ei, ej) ::= “Radnik ei rukovodi projektom ej”<br>
+→ Rukovodi = {(Ana, RazvojIS), (Eva, Lido)}</p>
+</li>
+</ul>
+<p>Ana <strong>radi na</strong> Lido projektu<br>
+Ana <strong>rukovodi</strong> RazvojIS projektom</p>
+<p>→ dve različite veze, dve različite klase poveznika.</p>
+<hr>
+<p><strong>Obeležje (atribut)</strong> je osobina nekog entiteta ili poveznika — npr. student ima <code>BRI</code>, <code>IME</code>, <code>PRZ</code>.</p>
+<p><strong>Vrste obeležja:</strong></p>
+<ul>
+<li><strong>Elementarno</strong> — ne može se dalje deliti → <code>Grad</code>, <code>Ulica</code>, <code>Broj</code></li>
+<li><strong>Složeno</strong> — sastoji se od više elementarnih → <code>ADRESA = (Grad, Ulica, Broj, Stan)</code></li>
+<li><strong>Skupovno</strong> — čuva više vrednosti istog tipa → npr. lista telefona <code>{061, 062, 064}</code></li>
+</ul>
+<hr>
+<h3 id="strukturalna-komponenta-er-modela">Strukturalna komponenta ER modela</h3>
+<p>Tri primitivna koncepta: <strong>vrednost</strong>, <strong>domen</strong>, <strong>obeležje</strong>.</p>
+<hr>
+<p><strong>Vrednost</strong> — bilo koja konstanta: <code>5</code>, <code>"Ana"</code>, <code>true</code></p>
+<hr>
+<p><strong>Domen</strong> — skup dozvoljenih vrednosti za neko obeležje, dve vrste:</p>
+<ul>
+<li>
+<p><strong>Predefinisani (primitivni)</strong> — ugrađeni tipovi:</p>
+<ul>
+<li>teoretski: ℕ, ℤ, ℝ, boolean</li>
+<li>praktični: <code>integer</code>, <code>float</code>, <code>string</code>, <code>boolean</code>…</li>
+</ul>
+</li>
+<li>
+<p><strong>Korisnički definisani</strong> — praviš sam na osnovu postojećih:</p>
+<pre><code>D_OCENA ::= {d ∈ ℕ | d &gt;= 5 AND d &lt;= 10}
+D_NAZIV ::= String(30)
+D_MONEY ::= Decimal(12, 2)
+</code></pre>
+</li>
+</ul>
+<hr>
+<p><strong>Pravilo:</strong> svakom obeležju se pridružuje <strong>tačno jedan domen</strong></p>
+<pre><code>Dom(Ocena) = DOCENA
+→ Ocena može biti: {5, 6, 7, 8, 9, 10}
+</code></pre>
+<hr>
+<h3 id="podatak">Podatak</h3>
+<p>Podatak je <strong>uređena četvorka:</strong></p>
+<p>(<strong>Entitet</strong>, <strong>Obeležje</strong>, <strong>Vreme</strong>, <strong>Vrednost</strong>)</p>
+<ul>
+<li><strong>Entitet</strong> — o kome/čemu se radi → <code>Student SV13</code></li>
+<li><strong>Obeležje</strong> — koja osobina → <code>IME</code></li>
+<li><strong>Vreme</strong> — kada → <code>2024-01-01</code></li>
+<li><strong>Vrednost</strong> — konkretna vrednost → <code>"Ana"</code></li>
+</ul>
+<p><strong>Primer:</strong></p>
+<pre><code>(SV22, IME, 2024-01-01, "Milos")
+</code></pre>
+<p>→ “Student SV22 se 1.1.2024. zvao Milos”</p>
+<p><strong>Kontekst podatka</strong> = trojka <code>(Entitet, Obeležje, Vreme)</code></p>
+<blockquote>
+<p>Ako napišeš samo <code>"Ana"</code> bez konteksta — <strong>to nije podatak</strong>, jer ne znaš na koga/šta/kada se odnosi. Vrednost bez smisla = ništa.</p>
+</blockquote>
+<p><strong>Vreme se može izostaviti</strong> ako:</p>
+<ul>
+<li>podrazumeva se da se radi o <strong>trenutku manipulacije</strong> podacima, ili</li>
+<li>postoji <strong>posebno obeležje</strong> koje čuva vreme (npr. <code>Datum_upisa</code>)</li>
+</ul>
+<hr>
+<h3 id="tip-entiteta-te">Tip entiteta (TE)</h3>
+<p><strong>Tip entiteta</strong> je model klase realnih entiteta u IS — opisuje <strong>kako entitet izgleda</strong>, koja obeležja ima.</p>
+<p>Struktura: <code>N(Q, C)</code></p>
+<ul>
+<li><strong>N</strong> — naziv → <code>Radnik</code></li>
+<li><strong>Q</strong> — skup obeležja → <code>{Mbr, Ime, Prz, Zan, JMBG}</code></li>
+<li><strong>C</strong> — skup ograničenja (uključuje ključeve)</li>
+</ul>
+<p><strong>Primer:</strong></p>
+<pre><code>Radnik({Mbr, Ime, Prz, Zan, JMBG})
+</code></pre>
+<hr>
+<h3 id="pojava-tipa-entiteta">Pojava tipa entiteta</h3>
+<p><strong>Pojava</strong> je model jednog konkretnog entiteta - jedan <strong>red u tabeli</strong>.</p>
+<pre><code>p(N) = {(A1, a1), ..., (An, an)}
+</code></pre>
+<p><strong>Primer:</strong></p>
+<pre><code>Radnik(Mbr, Ime, Prz, Zan, JMBG)
+→ (1040, Milos, Vukic, Propalitet, 1204971720014)
+</code></pre>
+<hr>
+<h3 id="identifikator-tipa-entiteta">Identifikator tipa entiteta</h3>
+<p><strong>Identifikator</strong> je skup obeležja koji <strong>jedinstveno označava svaku pojavu</strong> — u SQL-u je to <strong>primarni ključ</strong>.</p>
+<ul>
+<li>svaka vrednost identifikatora → tačno jedna pojava</li>
+<li>npr. <code>Mbr = 1040</code> → uvek pokazuje na Milosa Vukic i nikoga drugog</li>
+</ul>
+<hr>
+<h3 id="ključ-tipa-entiteta">Ključ tipa entiteta</h3>
+<p><strong>Ključ</strong> = skup obeležja koji <strong>jedinstveno identifikuje</strong> svaku pojavu.</p>
+<pre><code>Radnik({Mbr, Ime, Prz, JMBG}, {Mbr, JMBG})
+</code></pre>
+<p>→ i <code>Mbr</code> i <code>JMBG</code> su ključevi — oba jedinstveno identifikuju radnika.</p>
+<p><strong>Primarni ključ</strong> = jedan izabrani ključ (podvučen):</p>
+<pre><code>Radnik(Mbr, Ime, Prz, JMBG)
+</code></pre>
+<hr>
+<h3 id="tip-poveznika-tp">Tip poveznika (TP)</h3>
+<p><strong>Tip poveznika</strong> je model veze između tipova entiteta.</p>
+<p>Struktura: <code>N(N1, N2, ..., Nm, Q, C)</code></p>
+<ul>
+<li><strong>N</strong> — naziv → <code>Sluša</code></li>
+<li><strong>N1, N2…</strong> — koji tipovi su povezani → <code>Student, Predmet</code></li>
+<li><strong>Q</strong> — obeležja veze → <code>{Semestar}</code></li>
+<li><strong>C</strong> — ograničenja</li>
+</ul>
+<hr>
+<h3 id="pojava-tipa-poveznika">Pojava tipa poveznika</h3>
+<p>Jedan konkretan poveznik — jedan <strong>red u veznoj tabeli</strong>.</p>
+<pre><code>p(Sluša) = (Student SV22, Predmet BP, Semestar 4)
+
+</code></pre>
+<hr>
+<h3 id="primer">Primer:</h3>
+<pre><code>Sluša(Student, Predmet, {Semestar}, C1)
+→ student sluša predmet u semestru
+
+Predaje(Nastavnik, Predmet, {BrojCasova}, C2)
+→ nastavnik predaje predmet
+
+PolažePredmet(Sluša, Predaje, {Ocena, Datum}, C3)
+→ poveznik nad dva poveznika
+→ student polaže predmet kod nastavnika
+</code></pre>
+<hr>
+<blockquote>
+<h2 id="nastavak-o-er-dijagramu-u-sledecem-fajlu">nastavak o er dijagramu u sledecem fajlu</h2>
+</blockquote>
+<hr>
+
+    </div>
+  </div>
+</body>
+
+</html>

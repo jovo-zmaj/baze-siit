@@ -1,0 +1,448 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bp-relacioni-model</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li>
+<ul>
+<li><a href="#model-podataka">Model podataka</a></li>
+<li><a href="#relaciona-šema-baze-podataka">Relaciona šema baze podataka</a></li>
+<li><a href="#primer---šeme-relacija-s">Primer - šeme relacija (S):</a></li>
+<li><a href="#primer---međurelaciona-ograničenja-i">Primer - međurelaciona ograničenja (I):</a></li>
+<li><a href="#relaciona-baza-podataka">Relaciona baza podataka</a></li>
+<li><a href="#šema-bp-vs-bp-—-nivoi">Šema BP vs BP — nivoi:</a></li>
+<li><a href="#konzistentnost-bp-—-dve-vrste">Konzistentnost BP — dve vrste:</a></li>
+<li><a href="#integritetna-komponenta-—-referencijalnost-i-funkcionalne-zavisnosti">Integritetna komponenta — referencijalnost i funkcionalne zavisnosti</a></li>
+<li><a href="#ograničenje-referencijalnog-integriteta">Ograničenje referencijalnog integriteta</a></li>
+<li><a href="#šta-se-dešava-pri-operacijama">Šta se dešava pri operacijama:</a></li>
+<li><a href="#funkcionalna-zavisnost-fz">Funkcionalna zavisnost (FZ)</a></li>
+<li><a href="#operacijska-komponenta-—-relaciona-algebra">Operacijska komponenta — relaciona algebra</a></li>
+<li><a href="#dekartov-proizvod-r-×-s">Dekartov proizvod r × s</a></li>
+<li><a href="#theta-spajanje-r-⋈f-s">Theta spajanje r ⋈F s</a></li>
+<li><a href="#šema-za-zadatke">Šema za zadatke:</a></li>
+<li><a href="#rešenja-zadataka">Rešenja zadataka:</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h2 id="model-podataka">Model podataka</h2>
+<hr>
+<p><strong>Strukturalna komponenta</strong></p>
+<ul>
+<li>gradivni elementi modela (primitivni i složeni koncepti)</li>
+<li>pravila kako se od njih prave složeniji koncepti</li>
+<li>modelira <strong>šemu BP</strong> — statičku strukturu</li>
+</ul>
+<hr>
+<p><strong>Operacijska komponenta</strong> — tri jezika:</p>
+
+<table>
+<thead>
+<tr>
+<th>Jezik</th>
+<th>Šta radi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>QL</strong> — upitni jezik</td>
+<td>čitanje podataka (SELECT)</td>
+</tr>
+<tr>
+<td><strong>DML</strong> — manipulisanje</td>
+<td>INSERT, UPDATE, DELETE</td>
+</tr>
+<tr>
+<td><strong>DDL</strong> — definicija</td>
+<td>CREATE TABLE, ALTER, DROP</td>
+</tr>
+</tbody>
+</table><p>Modelira <strong>dinamiku</strong> — šta se može raditi s podacima.</p>
+<hr>
+<p><strong>Integritetna komponenta</strong></p>
+<ul>
+<li>skup tipova ograničenja</li>
+<li>modelira <strong>šta je dozvoljeno</strong> u BP</li>
+</ul>
+<hr>
+<p><strong>Nivoi apstrakcije:</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Nivo</th>
+<th>Naziv</th>
+<th>Primer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intenzija</td>
+<td>tip / šema</td>
+<td><code>Radnik(Mbr, Ime, Prz)</code></td>
+</tr>
+<tr>
+<td>Ekstenzija</td>
+<td>pojava / podaci</td>
+<td><code>(101, Ana, Sin)</code></td>
+</tr>
+</tbody>
+</table><hr>
+<p>Ukratko: <strong>S</strong> opisuje strukturu, <strong>O</strong> opisuje operacije, <strong>I</strong> opisuje ograničenja.</p>
+<hr>
+<h2 id="relaciona-šema-baze-podataka">Relaciona šema baze podataka</h2>
+<p><strong>Relaciona šema BP</strong> je <strong>imenovani par <code>(S, I)</code></strong>:</p>
+<ul>
+<li>
+<p><strong>S</strong> = skup šema relacija</p>
+<pre><code>S = {(R1, O1), (R2, O2), ..., (Rn, On)}    
+</code></pre>
+<ul>
+<li>Ri = naziv relacije + skup obeležja</li>
+<li>Oi = skup ograničenja <strong>unutar</strong> te relacije</li>
+</ul>
+</li>
+<li>
+<p><strong>I</strong> = skup <strong>međurelacionih ograničenja</strong> - pravila koja se tiču <strong>veza između tabela</strong></p>
+</li>
+</ul>
+<h2 id="primer---šeme-relacija-s">Primer - šeme relacija (S):</h2>
+<pre><code>Radnik({MBR, IME, PRZ, DATR}, {
+  "Ne postoje dva radnika sa istom vrednošću MBR",
+  "Svaki radnik mora imati vrednost za MBR"
+})
+
+Projekat({SPR, NAP}, {
+  "Ne postoje dva projekta sa istom vrednošću SPR",
+  "Svaki projekat mora imati vrednost za SPR"
+})
+
+Angažovanje({SPR, MBR, BRC}, {
+  "Isti radnik ne može biti angažovan na istom projektu više puta",
+  "MBR i SPR moraju uvek biti poznati"
+})
+
+</code></pre>
+<hr>
+<h2 id="primer---međurelaciona-ograničenja-i">Primer - međurelaciona ograničenja (I):</h2>
+<pre><code>I = {
+  "Radnik ne može biti angažovan na projektu ako nije zaposlen",
+  "Na projektu ne može biti angažovan radnik dok projekat nije registrovan"
+}
+</code></pre>
+<p>→ <code>(S, I)</code> zajedno čine <strong>relacionu šemu BP</strong></p>
+<h2 id="relaciona-baza-podataka">Relaciona baza podataka</h2>
+<p><strong>Relaciona BP</strong> = konkretna <strong>pojava</strong> nad šemom <code>(S, I)</code> - stvarni podaci u tabelama.</p>
+<ul>
+<li>svakoj šemi relacije Ri odgovara jedna konkretna relacija ri sa podacima</li>
+<li>svi podaci moraju zadovoljiti ograničenja iz I</li>
+</ul>
+<p><strong>Primer konkretnih podataka:</strong></p>
+<p>Radnik:</p>
+
+<table>
+<thead>
+<tr>
+<th>MBR</th>
+<th>IME</th>
+<th>PRZ</th>
+<th>DATR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>101</td>
+<td>Ana</td>
+<td>Pap</td>
+<td>12.12.65.</td>
+</tr>
+<tr>
+<td>102</td>
+<td>Aca</td>
+<td>Tot</td>
+<td>13.11.48.</td>
+</tr>
+<tr>
+<td>110</td>
+<td>Ivo</td>
+<td>Ban</td>
+<td>01.01.49.</td>
+</tr>
+<tr>
+<td>111</td>
+<td>Olja</td>
+<td>Kun</td>
+<td>06.05.71.</td>
+</tr>
+</tbody>
+</table><p>Projekat:</p>
+
+<table>
+<thead>
+<tr>
+<th>SPR</th>
+<th>NAP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11</td>
+<td>X25</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Polaris</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Univ. IS</td>
+</tr>
+</tbody>
+</table><p>Angažovanje:</p>
+
+<table>
+<thead>
+<tr>
+<th>MBR</th>
+<th>SPR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>101</td>
+<td>11</td>
+</tr>
+<tr>
+<td>101</td>
+<td>14</td>
+</tr>
+<tr>
+<td>102</td>
+<td>14</td>
+</tr>
+</tbody>
+</table><hr>
+<h2 id="šema-bp-vs-bp-—-nivoi">Šema BP vs BP — nivoi:</h2>
+
+<table>
+<thead>
+<tr>
+<th>-</th>
+<th>Nivo</th>
+<th>Karakter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Šema BP</strong> <code>(S, I)</code></td>
+<td>Intenzija</td>
+<td>statična — sporo se menja</td>
+</tr>
+<tr>
+<td><strong>Relaciona BP</strong> <code>{r1...rn}</code></td>
+<td>Ekstenzija</td>
+<td>dinamična — stalno se menja</td>
+</tr>
+</tbody>
+</table><p>BP reprezentuje <strong>jedno stanje realnog sistema</strong> u datom trenutku i ažurira se kako se realni sistem menja.</p>
+<h2 id="konzistentnost-bp-—-dve-vrste">Konzistentnost BP — dve vrste:</h2>
+<p><strong>Formalna konzistentnost:</strong></p>
+<ul>
+<li>svaka relacija ri zadovoljava sva ograničenja svoje šeme Oi</li>
+<li>cela BP zadovoljava međurelaciona ograničenja I</li>
+<li><strong>SUBP može automatski da kontroliše ovo</strong></li>
+</ul>
+<p><strong>Suštinska konzistentnost:</strong></p>
+<ul>
+<li>BP je formalno konzistentna <strong>I</strong></li>
+<li>predstavlja <strong>vernu sliku</strong> realnog sistema</li>
+<li><strong>ne može se automatski garantovati</strong> — zavisi od ispravnosti unosa</li>
+<li>u praksi greške su svedene na ispod <strong>2-3%</strong></li>
+</ul>
+<h2 id="integritetna-komponenta-—-referencijalnost-i-funkcionalne-zavisnosti">Integritetna komponenta — referencijalnost i funkcionalne zavisnosti</h2>
+<h3 id="zavisnost-sadržavanja">Zavisnost sadržavanja</h3>
+<p><code>Ni[X] ⊆ Nj[Y]</code> znači:</p>
+<blockquote>
+<p>svaka vrednost obeležja X u tabeli Ni mora postojati kao vrednost Y u tabeli Nj</p>
+</blockquote>
+<p><strong>Primer:</strong></p>
+<pre><code>r:          s:
+A  | B      C  | D
+a1 | b1     a1 | b1
+a2 | ∅     a2 | b2
+            a3 | b2
+</code></pre>
+<p>→ <code>r[(A,B)] ⊆ s[(C,D)]</code> — svaki par iz r mora biti u s</p>
+<h2 id="ograničenje-referencijalnog-integriteta">Ograničenje referencijalnog integriteta</h2>
+<p>Poseban slučaj zavisnosti sadržavanja kada je <strong>Y ključ</strong> šeme Nj:</p>
+<pre><code>Ni[X] ⊆ Nj[Y]  →  Y je ključ od Nj
+</code></pre>
+<ul>
+<li><strong>Ni</strong> = referencirajuća tabela (ona koja “pokazuje”)</li>
+<li><strong>Nj</strong> = referencirana tabela (ona na koju se “pokazuje”)</li>
+</ul>
+<p><strong>Primeri:</strong></p>
+<pre><code>Projekat[RUK]    ⊆ Radnik[MBR]   → rukovodilac mora biti radnik
+Angažovanje[MBR] ⊆ Radnik[MBR]   → angažovani mora biti radnik
+Angažovanje[SPR] ⊆ Projekat[SPR] → projekat mora postojati
+</code></pre>
+<hr>
+<h2 id="šta-se-dešava-pri-operacijama">Šta se dešava pri operacijama:</h2>
+<p><strong>Unos novog projekta</strong> — <code>Projekat[RUK] ⊆ Radnik[MBR]</code></p>
+<pre><code>✅ RUK = 110 → Radnik 110 postoji → dozvoljeno
+❌ RUK = 210 → Radnik 210 ne postoji → GREŠKA
+
+</code></pre>
+<p><strong>Angažovanje radnika na projektu</strong> — <code>Angažovanje[MBR] ⊆ Radnik[MBR]</code> i <code>Angažovanje[SPR] ⊆ Projekat[SPR]</code></p>
+<pre><code>✅ MBR=110, SPR=15 → oba postoje → dozvoljeno
+❌ MBR=999 → ne postoji → GREŠKA
+
+</code></pre>
+<p><strong>Brisanje radnika</strong> — <code>Projekat[RUK] ⊆ Radnik[MBR]</code></p>
+<pre><code>DELETE FROM Radnik WHERE MBR = 102
+✅ → 102 nije rukovodilac ni na kom projektu → dozvoljeno
+
+DELETE FROM Radnik WHERE MBR = 110
+❌ → 110 je RUK na projektu P7 → GREŠKA, narušava referencijalni integritet
+
+</code></pre>
+<h2 id="funkcionalna-zavisnost-fz">Funkcionalna zavisnost (FZ)</h2>
+<p><strong>Oblik:</strong> <code>X → Y</code></p>
+<p><strong>Semantika:</strong> ako znaš vrednost X, znaš tačno jednu vrednost Y.</p>
+<p>Formalno:</p>
+<pre><code>za sve torke u, v u relaciji r:
+ako u[X] = v[X]  →  onda mora biti u[Y] = v[Y]
+</code></pre>
+<p><strong>Primer:</strong></p>
+<pre><code>MBR → IME    (ako znaš MBR radnika, znaš njegovo ime)
+MBR → PRZ
+SPR → NAP    (ako znaš šifru projekta, znaš naziv)
+</code></pre>
+<p><strong>Nije FZ:</strong></p>
+<pre><code>IME → MBR   ❌  (mogu postojati dva radnika sa istim imenom)
+</code></pre>
+<hr>
+<p>Ukratko: <strong>referencijalni integritet</strong> štiti veze između tabela, <strong>FZ</strong> opisuje zavisnosti unutar jedne tabele.</p>
+<h2 id="operacijska-komponenta-—-relaciona-algebra">Operacijska komponenta — relaciona algebra</h2>
+<h3 id="osnovne-operacije">Osnovne operacije</h3>
+<p><strong>Selekcija</strong> <code>σF(r)</code> — filtriranje redova po uslovu F</p>
+<pre><code>σ(SPR=11)(Radproj) → samo redovi gde je SPR=11
+</code></pre>
+<p><strong>Projekcija</strong> <code>πX(r)</code> — zadržavanje samo određenih kolona</p>
+<pre><code>π(MBR,IME)(Radnik) → samo kolone MBR i IME
+</code></pre>
+<p><strong>Prirodno spajanje</strong> <code>r ⋈ s</code> — spajanje po istoimenim obeležjima</p>
+<pre><code>Radproj ⋈ Projekat → spaja po SPR
+</code></pre>
+<h2 id="dekartov-proizvod-r-×-s">Dekartov proizvod <code>r × s</code></h2>
+<p>Sve moguće kombinacije torki iz dve relacije.</p>
+<h2 id="theta-spajanje-r-⋈f-s">Theta spajanje <code>r ⋈F s</code></h2>
+<p>Dekartov proizvod + selekcija po uslovu F:</p>
+<pre><code>r ⋈(DBG &lt; PBG) s
+
+</code></pre>
+<p><strong>Primer putovanja Niš→Beograd→Novi Sad:</strong></p>
+<pre><code>r (Niš→BG):        s (BG→NS):
+PNI  | DBG          PBG  | DNS
+06:00| 09:00        10:00| 11:15
+08:00| 10:30        12:00| 13:30
+
+Uslov: DBG &lt; PBG (stigao pre polaska)
+
+Rezultat:
+PNI   | DBG   | PBG   | DNS
+06:00 | 09:00 | 10:00 | 11:15
+06:00 | 09:00 | 12:00 | 13:30
+08:00 | 10:30 | 12:00 | 13:30
+
+</code></pre>
+<h2 id="šema-za-zadatke">Šema za zadatke:</h2>
+<pre><code>radnik({Mbr, Ime, Prz, Sef, Plt, God, Pre}, {Mbr})
+projekat({Spr, Ruk, Nap, Nar}, {Spr})
+radproj({Spr, Mbr, Brc}, {Spr+Mbr})
+
+radnik[Sef]  ⊆ radnik[Mbr]
+projekat[Ruk] ⊆ radnik[Mbr]
+radproj[Mbr] ⊆ radnik[Mbr]
+radproj[Spr] ⊆ projekat[Spr]
+
+</code></pre>
+<hr>
+<h2 id="rešenja-zadataka">Rešenja zadataka:</h2>
+<p><strong>1. MBR radnika koji rade na projektu SPR=10 ILI rade 5 sati:</strong></p>
+<pre><code>π(Mbr)(σ(Spr=10 OR Brc=5)(radproj))
+
+</code></pre>
+<p><strong>2. MBR, Ime, Prz radnika koji rade na SPR=10 ILI rade 5 sati:</strong></p>
+<pre><code>π(Mbr,Ime,Prz)(σ(Spr=10 OR Brc=5)(radproj) ⋈ radnik)
+
+</code></pre>
+<p><strong>3. Šifre i nazivi projekata na kojima radi Ivan Tasić:</strong></p>
+<pre><code>π(Spr,Nap)(σ(Ime='Ivan' AND Prz='Tasić')(radnik) ⋈ radproj ⋈ projekat)
+
+</code></pre>
+<p><strong>4. Projekti na kojima rade radnici sa platom &gt; 2500:</strong></p>
+<pre><code>π(Spr,Nap,Nar,Ruk)(σ(Plt&gt;2500)(radnik) ⋈ radproj ⋈ projekat)
+
+</code></pre>
+<p><strong>5. Radnici kojima je šef MBR=10 ILI zarada &gt; 2600:</strong></p>
+<pre><code>π(Mbr,Ime,Prz)(σ(Sef=10 OR Plt&gt;2600)(radnik))
+
+</code></pre>
+<p><strong>6. Projekti na kojima ne radi nijedan radnik:</strong></p>
+<pre><code>π(Spr,Nap,Nar,Ruk)(projekat) - π(Spr,Nap,Nar,Ruk)(projekat ⋈ radproj)
+
+</code></pre>
+<p><strong>7. Radnici koji ne rade na projektu SPR=P1:</strong></p>
+<pre><code>π(Mbr,Ime,Prz)(radnik) - π(Mbr,Ime,Prz)(σ(Spr='P1')(radproj) ⋈ radnik)
+
+</code></pre>
+<p><strong>8. Radnici koji nisu rukovodioci projekata:</strong></p>
+<pre><code>π(Mbr,Ime,Prz)(radnik) - π(Mbr,Ime,Prz)(radnik ⋈ ρ(Mbr←Ruk)(projekat))
+
+</code></pre>
+<p><strong>9. Projekti na kojima radi šef radnika MBR=2001:</strong></p>
+<pre><code>π(Spr,Nap)(
+  σ(Mbr = π(Sef)(σ(Mbr=2001)(radnik)))(radproj) ⋈ projekat
+)
+
+</code></pre>
+<p><strong>10. Projekti na kojima rade radnici koji rade i na “Univerzitetski IS”:</strong></p>
+<pre><code>π(Spr)(radproj ⋈ π(Mbr)(radproj ⋈ σ(Nap='Univerzitetski IS')(projekat)))
+
+</code></pre>
+<p><strong>11. Radnici koji rade na projektu “Nabavka”:</strong></p>
+<pre><code>π(Mbr,Ime,Prz)(radnik ⋈ radproj ⋈ σ(Nap='Nabavka')(projekat))
+
+</code></pre>
+<p><strong>12. Radnici koji na “Prodaja” rade više od 10 sati:</strong></p>
+<pre><code>π(Ime,Prz)(radnik ⋈ σ(Nap='Prodaja' AND Brc&gt;10)(radproj ⋈ projekat))
+
+</code></pre>
+<p><strong>13. Projekti kojima rukovodi Milan Perić:</strong></p>
+<pre><code>π(Spr,Nap)(σ(Ime='Milan' AND Prz='Perić')(radnik) ⋈ ρ(Mbr←Ruk)(projekat))
+
+</code></pre>
+<blockquote>
+<p><strong>Napomena za <code>ρ</code> (rho):</strong> ρ(Mbr←Ruk) znači “preimenuj obeležje Ruk u Mbr” da bi spajanje po imenu radilo.</p>
+</blockquote>
+
+    </div>
+  </div>
+</body>
+
+</html>

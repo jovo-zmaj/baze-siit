@@ -1,0 +1,666 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bp-usmeni</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#baze-podataka-–-ispitna-pitanja">Baze podataka – ispitna pitanja</a>
+<ul>
+<li><a href="#indeks-pitanja">Indeks pitanja</a></li>
+<li><a href="#integritetna-komponenta-relacionog-modela">1. Integritetna komponenta relacionog modela</a></li>
+<li><a href="#strukturalna-komponenta-er-modela">2. Strukturalna komponenta ER modela</a></li>
+<li><a href="#prevođenje-er-u-relacioni-model">3. Prevođenje ER u relacioni model</a></li>
+<li><a href="#deklarativni-mehanizmi-opšti-pregled">4. Deklarativni mehanizmi (opšti pregled)</a></li>
+<li><a href="#kategorizacija">5. Kategorizacija</a></li>
+<li><a href="#proceduralni-mehanizmi">6. Proceduralni mehanizmi</a></li>
+<li><a href="#deklarativni-mehanizmi-detaljno-–-sintaksa">7. Deklarativni mehanizmi (detaljno – sintaksa)</a></li>
+<li><a href="#group-by">8. GROUP BY</a></li>
+<li><a href="#inner--outer-join">9. INNER / OUTER JOIN</a></li>
+<li><a href="#integritetna-komponenta-er-modela">10. Integritetna komponenta ER modela</a></li>
+<li><a href="#ograničenja-referencijalnog-integriteta">11. Ograničenja referencijalnog integriteta</a></li>
+<li><a href="#slabi-tip-entiteta">12. Slabi tip entiteta</a></li>
+<li><a href="#is-a-hijerarhija">13. IS-A hijerarhija</a></li>
+<li><a href="#tip-poveznika-i-kako-se-formira-ključ">14. Tip poveznika i kako se formira ključ</a></li>
+<li><a href="#rekurzivna-veza">15. Rekurzivna veza</a></li>
+<li><a href="#šta-su-kursor-i-triger">16. Šta su kursor i triger</a></li>
+<li><a href="#ograničenje-inverznog-referencijalnog-integriteta">17. Ograničenje inverznog referencijalnog integriteta</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="baze-podataka-–-ispitna-pitanja">Baze podataka – ispitna pitanja</h1>
+<h2 id="indeks-pitanja">Indeks pitanja</h2>
+<ol>
+<li><a href="#1-integritetna-komponenta-relacionog-modela">Integritetna komponenta relacionog modela</a></li>
+<li><a href="#2-strukturalna-komponenta-er-modela">Strukturalna komponenta ER modela</a></li>
+<li><a href="#3-prevo%C4%91enje-er-u-relacioni-model">Prevođenje ER u relacioni model</a></li>
+<li><a href="#4-deklarativni-mehanizmi-op%C5%A1ti-pregled">Deklarativni mehanizmi (opšti pregled)</a></li>
+<li><a href="#5-kategorizacija">Kategorizacija</a></li>
+<li><a href="#6-proceduralni-mehanizmi">Proceduralni mehanizmi</a></li>
+<li><a href="#7-deklarativni-mehanizmi-detaljno--sintaksa">Deklarativni mehanizmi (detaljno – sintaksa)</a></li>
+<li><a href="#8-group-by">GROUP BY</a></li>
+<li><a href="#9-inner--outer-join">INNER / OUTER JOIN</a></li>
+<li><a href="#10-integritetna-komponenta-er-modela">Integritetna komponenta ER modela</a></li>
+<li><a href="#11-ograni%C4%8Denja-referencijalnog-integriteta">Ograničenja referencijalnog integriteta</a></li>
+<li><a href="#12-slabi-tip-entiteta">Slabi tip entiteta</a></li>
+<li><a href="#13-is-a-hijerarhija">IS-A hijerarhija</a></li>
+<li><a href="#14-tip-poveznika-i-kako-se-formira-klju%C4%8D">Tip poveznika i kako se formira ključ</a></li>
+<li><a href="#15-rekurzivna-veza">Rekurzivna veza</a></li>
+<li><a href="#16-%C5%A1ta-su-kursor-i-triger">Šta su kursor i triger</a></li>
+<li><a href="#17-ograni%C4%8Denje-inverznog-referencijalnog-integriteta">Ograničenje inverznog referencijalnog integriteta</a></li>
+</ol>
+<hr>
+<h2 id="integritetna-komponenta-relacionog-modela">1. Integritetna komponenta relacionog modela</h2>
+<p>Integritetna komponenta relacionog modela podataka (RMP) je jedna od tri komponente modela <code>(S, I, O)</code> i <strong>modelira šta je dozvoljeno u bazi podataka</strong> – skup tipova ograničenja koja podaci moraju da poštuju.</p>
+<h3 id="karakteristike-tipa-ograničenja-u-rmp">Karakteristike tipa ograničenja u RMP</h3>
+<p>Svaki tip ograničenja karakterišu:</p>
+<ul>
+<li><strong>Oblast definisanosti</strong> – tip logičke strukture obeležja nad kojom se ograničenje definiše</li>
+<li><strong>Oblast interpretacije</strong> – tip logičke strukture podataka nad kojom se ograničenje interpretira</li>
+<li><strong>Formalizam za zapisivanje</strong> (definicija)</li>
+<li><strong>Pravilo za interpretaciju</strong> (validaciju)</li>
+<li><strong>Skup kritičnih operacija</strong> nad BP koje mogu dovesti do narušavanja ograničenja</li>
+<li><strong>Skup mogućih akcija</strong> kojima se obezbeđuje očuvanje validnosti BP, definisan za svaku kritičnu operaciju</li>
+</ul>
+<h3 id="tipovi-ograničenja-u-rmp">Tipovi ograničenja u RMP</h3>
+<ul>
+<li><strong>Ograničenje domena</strong> – koje vrednosti su dozvoljene za dati domen</li>
+<li><strong>Ograničenje vrednosti obeležja</strong> – da li obeležje sme biti NULL, kom domenu pripada</li>
+<li><strong>Ograničenje torke</strong> – uslov koji svaka torka relacije mora zadovoljiti (npr. CHECK)</li>
+<li><strong>Ograničenje ključa</strong> – jedinstvenost i NOT NULL identifikatora</li>
+<li><strong>Ograničenje jedinstvenosti</strong> – UNIQUE, bez obaveze NOT NULL</li>
+<li><strong>Zavisnost sadržavanja</strong> – <code>Ni[X] ⊆ Nj[Y]</code>, vrednosti X u Ni moraju postojati kao Y u Nj</li>
+<li><strong>Ograničenje referencijalnog integriteta</strong> – poseban slučaj zavisnosti sadržavanja kada je Y ključ šeme Nj</li>
+</ul>
+<h3 id="kritične-operacije-i-konzistentnost">Kritične operacije i konzistentnost</h3>
+<p>Kritične operacije koje mogu narušiti ograničenje: <strong>INSERT</strong> (upis nove torke), <strong>DELETE</strong> (brisanje torke), <strong>UPDATE</strong> (modifikacija vrednosti). Akcije očuvanja konzistentnosti se dele na <strong>pasivne</strong> (sprečavanje operacije), <strong>aktivne</strong> (automatsko sprovođenje daljih operacija radi očuvanja konzistentnosti) i <strong>kombinovane</strong>.</p>
+<h3 id="konzistentnost-bp-–-dve-vrste">Konzistentnost BP – dve vrste</h3>
+<ul>
+<li><strong>Formalna konzistentnost</strong> – svaka relacija zadovoljava ograničenja svoje šeme, cela BP zadovoljava međurelaciona ograničenja I; <strong>SUBP može automatski da kontroliše ovo</strong>.</li>
+<li><strong>Suštinska konzistentnost</strong> – BP je formalno konzistentna I predstavlja vernu sliku realnog sistema; <strong>ne može se automatski garantovati</strong>, zavisi od ispravnosti unosa.</li>
+</ul>
+<h3 id="funkcionalna-zavisnost-fz">Funkcionalna zavisnost (FZ)</h3>
+<p><code>X → Y</code> – ako znaš vrednost X, znaš tačno jednu vrednost Y (npr. <code>MBR → IME</code>). Ovo opisuje zavisnosti <strong>unutar</strong> jedne tabele, dok referencijalni integritet štiti veze <strong>između</strong> tabela.</p>
+<hr>
+<h2 id="strukturalna-komponenta-er-modela">2. Strukturalna komponenta ER modela</h2>
+<p>Strukturalna komponenta ER modela opisuje <strong>kako podaci izgledaju</strong> – gradivne elemente i pravila za pravljenje složenijih koncepata iz njih.</p>
+<h3 id="tri-primitivna-koncepta">Tri primitivna koncepta</h3>
+
+<table>
+<thead>
+<tr>
+<th>Koncept</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vrednost</strong></td>
+<td>bilo koja konstanta (<code>5</code>, <code>"Ana"</code>, <code>true</code>)</td>
+</tr>
+<tr>
+<td><strong>Domen</strong></td>
+<td>skup dozvoljenih vrednosti za obeležje – predefinisani (ℕ, string, boolean…) ili korisnički definisan (<code>D_OCENA ::= {d ∈ ℕ \| d ≥ 5 AND d ≤ 10}</code>)</td>
+</tr>
+<tr>
+<td><strong>Obeležje</strong></td>
+<td>osobina entiteta/poveznika; svakom obeležju se pridružuje <strong>tačno jedan</strong> domen</td>
+</tr>
+</tbody>
+</table><p>Vrste obeležja: <strong>elementarno</strong> (ne deli se dalje, npr. <code>Grad</code>), <strong>složeno</strong> (sastoji se od više elementarnih, npr. <code>ADRESA = (Grad, Ulica, Broj)</code>), <strong>skupovno</strong> (čuva više vrednosti istog tipa, npr. lista telefona).</p>
+<h3 id="podatak">Podatak</h3>
+<p>Podatak je uređena četvorka <strong>(Entitet, Obeležje, Vreme, Vrednost)</strong>, npr. <code>(SV22, IME, 2024-01-01, "Milos")</code>. Kontekst podatka je trojka <code>(Entitet, Obeležje, Vreme)</code> – vrednost bez konteksta nije podatak.</p>
+<h3 id="tip-entiteta-te">Tip entiteta (TE)</h3>
+<p>Struktura: <strong><code>N(Q, C)</code></strong></p>
+<ul>
+<li><code>N</code> – naziv (npr. <code>Radnik</code>)</li>
+<li><code>Q</code> – skup obeležja</li>
+<li><code>C</code> – skup ograničenja (uključuje ključeve)</li>
+</ul>
+<p><strong>Pojava tipa entiteta</strong> je model jednog konkretnog entiteta – jedan red u tabeli: <code>p(N) = {(A1, a1), ..., (An, an)}</code>.</p>
+<p><strong>Identifikator</strong> – skup obeležja koji jedinstveno označava svaku pojavu (u SQL-u: primarni ključ). <strong>Ključ</strong> – skup obeležja koji jedinstveno identifikuje pojavu; može ih biti više, a jedan izabrani postaje <strong>primarni ključ</strong>.</p>
+<h3 id="tip-poveznika-tp">Tip poveznika (TP)</h3>
+<p>Struktura: <strong><code>N(N1, N2, ..., Nm, Q, C)</code></strong></p>
+<ul>
+<li><code>N</code> – naziv veze (npr. <code>Sluša</code>)</li>
+<li><code>N1...Nm</code> – povezani tipovi entiteta</li>
+<li><code>Q</code> – obeležja same veze</li>
+<li><code>C</code> – ograničenja</li>
+</ul>
+<p><strong>Pojava tipa poveznika</strong> je jedan konkretan poveznik – jedan red u veznoj tabeli, npr. <code>p(Sluša) = (Student SV22, Predmet BP, Semestar 4)</code>.</p>
+<hr>
+<h2 id="prevođenje-er-u-relacioni-model">3. Prevođenje ER u relacioni model</h2>
+<p>Opšti tok: <strong>Realni sistem → ER šema (konceptualna) → prevođenje → Relaciona šema BP (implementaciona)</strong>.</p>
+
+<table>
+<thead>
+<tr>
+<th>ER konstrukcija</th>
+<th>Prevođenje u relacioni model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Regularni tip entiteta</strong></td>
+<td>direktno → jedna šema relacije; obeležja, ograničenja i ključevi TE postaju obeležja, ograničenja i ključevi relacije (jedan ključ → PK)</td>
+</tr>
+<tr>
+<td><strong>Binarni TP M:N</strong></td>
+<td>posebna šema relacije sa oba PK povezanih TE kao stranim ključevima (npr. <code>Radi(MBR, OZPR, BR_ČAS)</code>)</td>
+</tr>
+<tr>
+<td><strong>Binarni TP N:1</strong></td>
+<td>nema posebne tabele; PK sa “1” strane se prostire kao strani ključ na “N” stranu</td>
+</tr>
+<tr>
+<td><strong>Binarni TP 1:1</strong></td>
+<td>zavisi od minimalnih kardinaliteta: (0,0) → kao M:N ili N:1; (1,0)/(0,1) → kao N:1; (1,1) → sve u jednu šemu relacije</td>
+</tr>
+<tr>
+<td><strong>Dva TP između istih TE</strong></td>
+<td>rešenje A – novo obeležje <code>ULOGA</code> (samo za M:N/1:1); rešenje B – preimenovanje obeležja ključa (uvek primenjivo)</td>
+</tr>
+<tr>
+<td><strong>Rekurzivni TP</strong></td>
+<td>isti TE sa obe strane → preimenovanje jednog ključa (npr. <code>Sastavnica(IDBR, IDBK, KOL)</code>, gde je <code>IDBK</code> preimenovano <code>IDBR</code>)</td>
+</tr>
+<tr>
+<td><strong>Identifikaciono zavisni TE</strong></td>
+<td>ključ = ključ nadređenog + sopstvena obeležja, rekurzivno do regularnog TE</td>
+</tr>
+<tr>
+<td><strong>IS-A hijerarhija</strong></td>
+<td>A – šema za superklasu + šema za svaku potklasu (FK ka superklasi); B – šema samo za svaku potklasu (samo za totalnu IS-A); C – jedna šema za sve, sa NULL vrednostima za obeležja koja ne važe</td>
+</tr>
+<tr>
+<td><strong>Kategorizacija</strong></td>
+<td>A – dva strana ključa + ograničenje torke (tačno jedan mora biti popunjen); B – jedan strani ključ + obeležje vrste koje određuje na koju tabelu se referencira</td>
+</tr>
+<tr>
+<td><strong>N-arni TP (n&gt;2)</strong></td>
+<td>posebna šema relacije sa svim PK povezanih TE kao stranim ključevima</td>
+</tr>
+<tr>
+<td><strong>Gerund</strong></td>
+<td>dobija sopstvenu šemu relacije kao regularni TP; TP nad gerundom referencira tu šemu</td>
+</tr>
+</tbody>
+</table><h3 id="primer-–-regularni-te">Primer – regularni TE</h3>
+<pre><code>TE:  Radnik({Mbr, Ime, Prz, Zan}, {Mbr})
+         ↓
+REL: Radnik(Mbr, Ime, Prz, Zan)   PK: Mbr
+</code></pre>
+<h3 id="primer-–-binarni-tp-mn">Primer – binarni TP M:N</h3>
+<pre><code>Radnik({MBR, IME, PRZ, ZAN}, {MBR})
+Projekat({OZPR, NAZPR, NARUČ}, {OZPR})
+Radi({MBR, OZPR, BR_ČAS}, {MBR+OZPR})
+
+Radi[MBR]  ⊆ Radnik[MBR]
+Radi[OZPR] ⊆ Projekat[OZPR]
+</code></pre>
+<hr>
+<h2 id="deklarativni-mehanizmi-opšti-pregled">4. Deklarativni mehanizmi (opšti pregled)</h2>
+<p>Deklarativni mehanizmi su jedna od dve grupe mehanizama RSUBP za implementaciju ograničenja šeme BP.</p>
+<ul>
+<li>Aktivnosti provere važenja ograničenja i očuvanja konzistentnosti se, <strong>većim delom, podrazumevaju</strong> – bez pisanja procedura kontrole.</li>
+<li>Koriste se za implementaciju ograničenja na najvećim delom podrazumevani način.</li>
+<li>Glavni mehanizmi (SQL:2006): SQL klauzula <code>CONSTRAINT</code>, <code>CREATE DOMAIN</code>, <code>CREATE ASSERTION</code>.</li>
+<li><code>CONSTRAINT</code> klauzula obuhvata pet specifikacija tipa ograničenja: <code>NOT NULL</code>, <code>PRIMARY KEY</code>, <code>UNIQUE</code>, <code>CHECK</code>, <code>FOREIGN KEY</code>.</li>
+<li>Za sve osim <code>FOREIGN KEY</code>, jedina moguća akcija pri narušavanju je <strong>NO ACTION</strong> (odbijanje operacije). <code>FOREIGN KEY</code> jedini nudi sve tipove akcija (<code>NO ACTION</code>, <code>CASCADE</code>, <code>SET NULL</code>, <code>SET DEFAULT</code>) putem <code>ON DELETE</code>/<code>ON UPDATE</code>.</li>
+<li>Predstavljaju sastavni deo naredbi <code>CREATE TABLE</code> i <code>ALTER TABLE</code>.</li>
+</ul>
+<p><em>Detaljna sintaksa svakog mehanizma data je pod pitanjem 7, radi izbegavanja dupliranja.</em></p>
+<hr>
+<h2 id="kategorizacija">5. Kategorizacija</h2>
+<p><strong>Kategorizacija</strong> postoji kada se jedan tip entiteta povezuje sa <strong>više kategorija</strong> (drugih TE), pri čemu svaka pojava pripada <strong>najviše jednoj</strong> od njih.</p>
+<ul>
+<li>Nema id-zavisnosti.</li>
+<li>Tipovi (kategorije) su međusobno nezavisni.</li>
+<li>Veza prema kategorijama je tipa <strong>EX-OR</strong> (isključivo ili) – entitet mora pripadati tačno jednoj kategoriji, ne obema.</li>
+</ul>
+<p><strong>Primer:</strong> Član kluba mora biti ili pravno ili fizičko lice, ne oba.</p>
+<h3 id="prevođenje-u-relacioni-model">Prevođenje u relacioni model</h3>
+<p><strong>Rešenje A – dva strana ključa + ograničenje torke:</strong></p>
+<pre><code>Član_kluba({CLID, CLVRST, CLDAT, MBR, JMBG}, {CLID})
+
+(JMBG ≠ ∅ AND MBR = ∅) OR (JMBG = ∅ AND MBR ≠ ∅)
+</code></pre>
+<p><strong>Rešenje B – jedan strani ključ + obeležje vrste:</strong></p>
+<pre><code>Član_kluba({CLID, CLVRST, CLDAT, MBG}, {CLID})
+CLVRST: 0 = pravno lice, 1 = fizičko lice
+
+σ(CLVRST=0)(Član_kluba)[MBG] ⊆ Pravno_lice[MBR]
+σ(CLVRST=1)(Član_kluba)[MBG] ⊆ Fizičko_lice[JMBG]
+</code></pre>
+<hr>
+<h2 id="proceduralni-mehanizmi">6. Proceduralni mehanizmi</h2>
+<p>Proceduralni mehanizmi su druga grupa mehanizama RSUBP – koriste se kada se ograničenje ne može u potpunosti opisati deklarativno, i za pravila poslovanja koja ne rezultuju u ograničenjima šeme BP.</p>
+<ul>
+<li>Aktivnosti provere važenja ograničenja i očuvanja konzistentnosti se <strong>većim delom programiraju</strong>, putem proceduralnog jezika.</li>
+<li>Glavni mehanizmi:
+<ul>
+<li><strong>Okidači (trigeri)</strong> – <code>CREATE TRIGGER</code></li>
+<li><strong>Procedure i funkcije</strong> – <code>CREATE PROCEDURE</code>, <code>CREATE FUNCTION</code></li>
+<li><strong>Paketi</strong> – <code>CREATE PACKAGE</code>, <code>CREATE PACKAGE BODY</code></li>
+</ul>
+</li>
+<li>SQL:2006 propisuje standard za <strong>deklarisanje</strong> trigera/procedura/funkcija, ali ne postoji standard za <strong>proceduralni deo</strong> (Oracle: PL/SQL, MS SQL Server: T-SQL). Za pakete ne postoji standardna sintaksa uopšte.</li>
+</ul>
+<h3 id="specifikacija-trigera">Specifikacija trigera</h3>
+<ul>
+<li><strong>Oblast aktiviranja</strong> – tabela ili pogled nad kojom se definiše</li>
+<li><strong>Operacije</strong> koje ga pokreću (INSERT/UPDATE/DELETE)</li>
+<li><strong>Uslovi</strong> aktiviranja</li>
+<li><strong>Vreme aktiviranja</strong> – <code>BEFORE</code> / <code>AFTER</code> / <code>INSTEAD OF</code> (samo za poglede)</li>
+<li><strong>Frekvencija</strong> – jednom za celu operaciju (<strong>Statement Level</strong>), ili za svaku torku (<strong>Row Level</strong>, <code>FOR EACH ROW</code>)</li>
+<li><strong>Aktivnost (procedura)</strong> koju realizuje</li>
+</ul>
+<p>Aktivira se <strong>automatski</strong> i <strong>ne može se izbeći voljom korisnika</strong>.</p>
+<h3 id="sintaksa">Sintaksa</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token punctuation">[</span><span class="token operator">OR</span> REPLACE<span class="token punctuation">]</span> <span class="token keyword">TRIGGER</span> Naziv_Trigera
+BEFORE <span class="token operator">|</span> <span class="token keyword">AFTER</span> <span class="token operator">|</span> INSTEAD <span class="token keyword">OF</span>
+<span class="token keyword">INSERT</span> <span class="token operator">|</span> <span class="token keyword">DELETE</span> <span class="token operator">|</span> <span class="token keyword">UPDATE</span> <span class="token punctuation">[</span><span class="token keyword">OF</span> ListaObeležja<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token operator">OR</span> <span class="token keyword">INSERT</span> <span class="token operator">|</span> <span class="token keyword">DELETE</span> <span class="token operator">|</span> <span class="token keyword">UPDATE</span> <span class="token punctuation">[</span><span class="token keyword">OF</span> ListaObeležja<span class="token punctuation">]</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+<span class="token keyword">ON</span> Naziv_Tabele
+<span class="token punctuation">[</span><span class="token keyword">FOR EACH ROW</span> <span class="token punctuation">[</span><span class="token keyword">WHEN</span> <span class="token punctuation">(</span>LogičkiUslovPokretanjaTrigera<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span>REFERENCING OLD <span class="token keyword">AS</span> NazivOld NEW <span class="token keyword">AS</span> NazivNew<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">DECLARE</span>
+  Deklarativni_deo
+<span class="token punctuation">]</span>
+<span class="token keyword">BEGIN</span>
+  Izvršni_deo
+<span class="token punctuation">[</span>EXCEPTION Deo_za_obradu_izuzetaka<span class="token punctuation">]</span>
+<span class="token keyword">END</span> <span class="token punctuation">[</span>Naziv_Trigera<span class="token punctuation">]</span><span class="token punctuation">;</span>
+</code></pre>
+<p>U telu Row Level trigera: <strong><code>:OLD.kolona</code></strong> – stara vrednost (UPDATE/DELETE), <strong><code>:NEW.kolona</code></strong> – nova vrednost (UPDATE/INSERT).</p>
+<h3 id="procedure-i-funkcije">Procedure i funkcije</h3>
+<p>Proceduralno specificirani programi na nivou SUBP; <strong>pozivaju se po potrebi</strong> (ne aktiviraju se automatski, za razliku od trigera), čuvaju se u izvornom i kompajliranom obliku, pozivaju se iz trigera ili direktno iz korisničkih programa.</p>
+<hr>
+<h2 id="deklarativni-mehanizmi-detaljno-–-sintaksa">7. Deklarativni mehanizmi (detaljno – sintaksa)</h2>
+<p><em>(Detaljna, sintaksna razrada mehanizma opisanog konceptualno pod pitanjem 4.)</em></p>
+<h3 id="not-null">NOT NULL</h3>
+<p>Uvek se zadaje na nivou obeležja (kolone):</p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p>Proverava se pri upisu/modifikaciji; jedina akcija: <strong>NO ACTION</strong>.</p>
+<h3 id="primary-key-lista_obeležja">PRIMARY KEY [(Lista_obeležja)]</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token comment">-- na nivou obeležja</span>
+<span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+
+<span class="token comment">-- na nivou šeme relacije</span>
+<span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span>Lista_obeležja<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p>Implicitno povlači <code>NOT NULL</code> za sva obeležja u listi. Kod nekih SUBP automatski kreira unique indeks (B⁺ stablo).</p>
+<h3 id="unique-lista_obeležja">UNIQUE [(Lista_obeležja)]</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">UNIQUE</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+<span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">UNIQUE</span> <span class="token punctuation">(</span>Lista_obeležja<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p>Ne povlači obavezno <code>NOT NULL</code> (za razliku od PRIMARY KEY).</p>
+<h3 id="check-logičkiizraz">CHECK (LogičkiIzraz)</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">CHECK</span> <span class="token punctuation">(</span>LogičkiIzraz<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+<span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">CHECK</span> <span class="token punctuation">(</span>LogičkiIzraz<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p><code>LogičkiIzraz</code> mora biti izračunljiv za svaku torku; rezultat: TRUE, FALSE ili NULL. Ograničenje je narušeno samo kada je rezultat <strong>FALSE</strong>. Konkretni SUBP obično ne dozvoljavaju obeležja iz drugih šema, podupite ili funkcije koje bi to kršile.</p>
+<h3 id="foreign-key">FOREIGN KEY</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">FOREIGN</span> <span class="token keyword">KEY</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>ListaObeležja<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token keyword">REFERENCES</span> NazivRefŠR <span class="token punctuation">[</span><span class="token punctuation">(</span>ListaRefObeležja<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">MATCH</span> { <span class="token keyword">FULL</span> <span class="token operator">|</span> <span class="token keyword">PARTIAL</span> }<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">ON</span> <span class="token keyword">DELETE</span> {<span class="token keyword">NO</span> <span class="token keyword">ACTION</span> <span class="token operator">|</span> <span class="token keyword">CASCADE</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token keyword">DEFAULT</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">ON</span> <span class="token keyword">UPDATE</span> {<span class="token keyword">NO</span> <span class="token keyword">ACTION</span> <span class="token operator">|</span> <span class="token keyword">CASCADE</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token keyword">DEFAULT</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+</code></pre>
+<p>Provera se vrši pri:</p>
+
+<table>
+<thead>
+<tr>
+<th>Operacija</th>
+<th>Moguća akcija</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Upis nove torke u referencirajuću relaciju</td>
+<td>jedino NO ACTION</td>
+</tr>
+<tr>
+<td>Modifikacija stranog ključa</td>
+<td>jedino NO ACTION</td>
+</tr>
+<tr>
+<td>Brisanje torke iz referencirane relacije</td>
+<td><code>ON DELETE</code> (sve 4 akcije), podrazumevano NO ACTION</td>
+</tr>
+<tr>
+<td>Modifikacija referenciranih obeležja</td>
+<td><code>ON UPDATE</code> (sve 4 akcije), podrazumevano NO ACTION</td>
+</tr>
+</tbody>
+</table><h3 id="create-domain">CREATE DOMAIN</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> DOMAIN Naziv_domena
+<span class="token punctuation">[</span><span class="token keyword">AS</span><span class="token punctuation">]</span> Tip_podatka <span class="token punctuation">[</span><span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">DEFAULT</span> {Konstanta <span class="token operator">|</span> Funkcija <span class="token operator">|</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">CHECK</span> <span class="token punctuation">(</span>LogičkiIzraz<span class="token punctuation">)</span><span class="token punctuation">]</span>
+</code></pre>
+<p>Oznaka za bilo koju vrednost u izrazu je <code>VALUE</code>. Konkretni SUBP ne podržavaju uvek ovaj mehanizam.</p>
+<hr>
+<h2 id="group-by">8. GROUP BY</h2>
+<p><code>GROUP BY</code> grupiše redove rezultata upita koji imaju <strong>iste vrednosti</strong> u navedenim kolonama u jedan sumarni red, obično u kombinaciji sa <strong>agregatnim funkcijama</strong> (<code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code>).</p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">SELECT</span> Odeljenje<span class="token punctuation">,</span> <span class="token function">COUNT</span><span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token keyword">AS</span> BrojZaposlenih<span class="token punctuation">,</span> <span class="token function">AVG</span><span class="token punctuation">(</span>Plata<span class="token punctuation">)</span> <span class="token keyword">AS</span> ProsecnaPlata
+<span class="token keyword">FROM</span> Zaposleni
+<span class="token keyword">GROUP</span> <span class="token keyword">BY</span> Odeljenje<span class="token punctuation">;</span>
+</code></pre>
+<p><strong>Pravila:</strong></p>
+<ul>
+<li>Svaka kolona u <code>SELECT</code> listi koja <strong>nije</strong> agregatna funkcija mora se pojaviti i u <code>GROUP BY</code>.</li>
+<li>Filtriranje <strong>grupa</strong> (nakon grupisanja) vrši se putem <code>HAVING</code>, ne <code>WHERE</code> (<code>WHERE</code> filtrira pojedinačne redove pre grupisanja).</li>
+</ul>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">SELECT</span> Odeljenje<span class="token punctuation">,</span> <span class="token function">COUNT</span><span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token keyword">AS</span> Broj
+<span class="token keyword">FROM</span> Zaposleni
+<span class="token keyword">WHERE</span> Aktivan <span class="token operator">=</span> <span class="token number">1</span>
+<span class="token keyword">GROUP</span> <span class="token keyword">BY</span> Odeljenje
+<span class="token keyword">HAVING</span> <span class="token function">COUNT</span><span class="token punctuation">(</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token operator">&gt;</span> <span class="token number">5</span><span class="token punctuation">;</span>
+</code></pre>
+<ul>
+<li>Redosled logičkog izvršavanja: <code>FROM</code> → <code>WHERE</code> → <code>GROUP BY</code> → <code>HAVING</code> → <code>SELECT</code> → <code>ORDER BY</code>.</li>
+</ul>
+<hr>
+<h2 id="inner--outer-join">9. INNER / OUTER JOIN</h2>
+<p>Operacije spajanja tabela na osnovu uslova poklapanja (obično nad stranim/primarnim ključem).</p>
+<h3 id="inner-join">INNER JOIN</h3>
+<p>Vraća <strong>samo redove koji imaju poklapanje</strong> u obe tabele.</p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">SELECT</span> r<span class="token punctuation">.</span>Ime<span class="token punctuation">,</span> p<span class="token punctuation">.</span>Naziv
+<span class="token keyword">FROM</span> Radnik r
+<span class="token keyword">INNER</span> <span class="token keyword">JOIN</span> Radi ra <span class="token keyword">ON</span> r<span class="token punctuation">.</span>MBR <span class="token operator">=</span> ra<span class="token punctuation">.</span>MBR
+<span class="token keyword">INNER</span> <span class="token keyword">JOIN</span> Projekat p <span class="token keyword">ON</span> ra<span class="token punctuation">.</span>SPR <span class="token operator">=</span> p<span class="token punctuation">.</span>SPR<span class="token punctuation">;</span>
+</code></pre>
+<h3 id="outer-join">OUTER JOIN</h3>
+<p>Vraća poklapanja <strong>plus</strong> redove bez poklapanja iz jedne ili obe tabele, popunjene sa <code>NULL</code> za kolone koje nemaju para.</p>
+
+<table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>Zadržava nespojene redove iz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LEFT (OUTER) JOIN</strong></td>
+<td>leve tabele</td>
+</tr>
+<tr>
+<td><strong>RIGHT (OUTER) JOIN</strong></td>
+<td>desne tabele</td>
+</tr>
+<tr>
+<td><strong>FULL (OUTER) JOIN</strong></td>
+<td>obe tabele</td>
+</tr>
+</tbody>
+</table><pre class=" language-sql"><code class="prism  language-sql"><span class="token comment">-- svi radnici, i oni koji nisu ni na jednom projektu</span>
+<span class="token keyword">SELECT</span> r<span class="token punctuation">.</span>Ime<span class="token punctuation">,</span> p<span class="token punctuation">.</span>Naziv
+<span class="token keyword">FROM</span> Radnik r
+<span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> Radi ra <span class="token keyword">ON</span> r<span class="token punctuation">.</span>MBR <span class="token operator">=</span> ra<span class="token punctuation">.</span>MBR
+<span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> Projekat p <span class="token keyword">ON</span> ra<span class="token punctuation">.</span>SPR <span class="token operator">=</span> p<span class="token punctuation">.</span>SPR<span class="token punctuation">;</span>
+</code></pre>
+<p><strong>Poenta:</strong> <code>INNER JOIN</code> odgovara relacionoj operaciji prirodnog/theta spajanja koje vraća samo torke koje zadovoljavaju uslov spajanja; <code>OUTER JOIN</code> dodatno čuva “siročad” (redove bez para) uz NULL popunu.</p>
+<hr>
+<h2 id="integritetna-komponenta-er-modela">10. Integritetna komponenta ER modela</h2>
+<p>Integritetna komponenta ER modela definiše pet tipova ograničenja:</p>
+<ul>
+<li><strong>Ograničenje domena</strong> – koje vrednosti su dozvoljene za domen</li>
+<li><strong>Ograničenje vrednosti obeležja</strong> – da li obeležje sme biti NULL, kom domenu pripada</li>
+<li><strong>Ograničenje pojave tipa</strong> – pravila unutar jedne pojave TE ili TP</li>
+<li><strong>Kardinalitet tipa poveznika</strong> – koliko pojava učestvuje u vezi</li>
+<li><strong>Ograničenje ključa</strong> – jedinstvenost identifikatora</li>
+</ul>
+<h3 id="ograničenje-domena">Ograničenje domena</h3>
+<p>Struktura: <code>D(id(D), Predef)</code>, gde je <code>id(D) = (Tip, Dužina, Uslov)</code>.</p>
+<pre><code>DDATUM  → (Date, ∅, d &gt;= '01.01.1900')
+DOCENA  → (Number, 2, d &gt;= 5 AND d &lt;= 10)
+</code></pre>
+<h3 id="null-vrednost">NULL vrednost</h3>
+<p>Specijalna vrednost koja znači “vrednost nedostaje”: <strong>nepoznata</strong> (postoji, ali nije poznata), <strong>nepostojeća</strong> (uopšte ne postoji), ili <strong>neinformativna</strong> (nije relevantna).</p>
+<h3 id="ograničenje-vrednosti-obeležja">Ograničenje vrednosti obeležja</h3>
+<p><code>id(N, A) = (Domen, Null)</code>, gde <code>Null ∈ {T (dozvoljeno), ⊥ (zabranjeno)}</code>.</p>
+<h3 id="ograničenje-pojave-tipa">Ograničenje pojave tipa</h3>
+<p><code>id(N) = ({id(N, A) | A ∈ Q'}, Uslov)</code> – pravilo koje mora zadovoljiti svaka pojava (red), npr. <code>ZAN = 'prg' → BPJZ &lt;&gt; NULL</code>.</p>
+<h3 id="kardinalitet-tipa-poveznika">Kardinalitet tipa poveznika</h3>
+<p>Par <code>(a, b)</code>, gde je <code>a ∈ {0, 1}</code> minimalni, a <code>b ∈ {1, N}</code> maksimalni kardinalitet – govori koliko puta jedna pojava povezanog tipa učestvuje u pojavama TP (detaljno pod pitanjem 14).</p>
+<hr>
+<h2 id="ograničenja-referencijalnog-integriteta">11. Ograničenja referencijalnog integriteta</h2>
+<p><strong>Zavisnost sadržavanja:</strong> <code>Ni[X] ⊆ Nj[Y]</code> – svaka vrednost obeležja X u Ni mora postojati kao vrednost Y u Nj.</p>
+<p><strong>Ograničenje referencijalnog integriteta</strong> je poseban slučaj zavisnosti sadržavanja kada je <strong>Y ključ</strong> šeme Nj:</p>
+<pre><code>Ni[X] ⊆ Nj[Y]  →  Y je ključ od Nj
+</code></pre>
+<ul>
+<li><strong>Ni</strong> – referencirajuća tabela (ona koja “pokazuje”)</li>
+<li><strong>Nj</strong> – referencirana tabela (ona na koju se “pokazuje”)</li>
+</ul>
+<p><strong>Primeri:</strong></p>
+<pre><code>Projekat[RUK]    ⊆ Radnik[MBR]   → rukovodilac mora biti radnik
+Angažovanje[MBR] ⊆ Radnik[MBR]   → angažovani mora biti radnik
+Angažovanje[SPR] ⊆ Projekat[SPR] → projekat mora postojati
+</code></pre>
+<h3 id="ponašanje-pri-operacijama">Ponašanje pri operacijama</h3>
+<pre><code>DELETE FROM Radnik WHERE MBR = 102
+✅ → 102 nije rukovodilac ni na kom projektu → dozvoljeno
+
+DELETE FROM Radnik WHERE MBR = 110
+❌ → 110 je RUK na projektu P7 → GREŠKA, narušava referencijalni integritet
+</code></pre>
+<h3 id="realizacija-putem-foreign-key">Realizacija putem FOREIGN KEY</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">FOREIGN</span> <span class="token keyword">KEY</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>ListaObeležja<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token keyword">REFERENCES</span> NazivRefŠR <span class="token punctuation">[</span><span class="token punctuation">(</span>ListaRefObeležja<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">ON</span> <span class="token keyword">DELETE</span> {<span class="token keyword">NO</span> <span class="token keyword">ACTION</span> <span class="token operator">|</span> <span class="token keyword">CASCADE</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token keyword">DEFAULT</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">ON</span> <span class="token keyword">UPDATE</span> {<span class="token keyword">NO</span> <span class="token keyword">ACTION</span> <span class="token operator">|</span> <span class="token keyword">CASCADE</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token keyword">DEFAULT</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+</code></pre>
+<p>Provera se vrši pri: upisu nove torke u referencirajuću relaciju, modifikaciji stranog ključa, brisanju torke iz referencirane relacije, i modifikaciji referenciranih obeležja. Za prve dve operacije jedina moguća akcija je <strong>NO ACTION</strong>; za poslednje dve, bira se između <strong>NO ACTION / CASCADE / SET NULL / SET DEFAULT</strong> putem <code>ON DELETE</code> / <code>ON UPDATE</code> (podrazumevano NO ACTION).</p>
+<p><code>ListaRefObeležja</code> mora predstavljati primarni ključ, alternativni ključ, ili skup s ograničenjem jedinstvenosti u referenciranoj relaciji (<code>Key(Nj,Y)</code> ili <code>Unique(Nj,Y)</code>).</p>
+<hr>
+<h2 id="slabi-tip-entiteta">12. Slabi tip entiteta</h2>
+<p>Slab (id-zavisan) tip entiteta je onaj čiji identifikator zavisi od identifikatora nekog drugog (nadređenog) tipa entiteta.</p>
+<h3 id="egzistencijalna-zavisnost">Egzistencijalna zavisnost</h3>
+<ul>
+<li>Postoji kada je <strong>minimalni kardinalitet = 1</strong> prema nadređenom TE.</li>
+<li>Ako nestane nadređeni entitet, zavisni gubi smisao (npr. ako se ukine radno mesto → radnik gubi posao).</li>
+</ul>
+<h3 id="identifikaciona-zavisnost">Identifikaciona zavisnost</h3>
+<ul>
+<li>Poseban slučaj egzistencijalne zavisnosti.</li>
+<li>Kardinalitet prema zavisnom TE je <strong>(1,1)</strong>.</li>
+<li>Zavisni TE <strong>ne može da se identifikuje bez nadređenog</strong> – njegov ključ uključuje ključ nadređenog.</li>
+</ul>
+<h3 id="prevođenje-u-relacioni-model-1">Prevođenje u relacioni model</h3>
+<p>Ključ zavisnog TE = ključ nadređenog + sopstvena obeležja, rekurzivno do regularnog (nezavisnog) TE:</p>
+<pre><code>RadnaOrg({IDRO, NAZRO}, {IDRO})
+Sektor({IDRO, BRSEK, NAZSEK}, {IDRO+BRSEK})
+Odeljenje({IDRO, BRSEK, BROD, NAZOD}, {IDRO+BRSEK+BROD})
+
+Sektor[IDRO]          ⊆ RadnaOrg[IDRO]
+Odeljenje[IDRO+BRSEK] ⊆ Sektor[IDRO+BRSEK]
+</code></pre>
+<hr>
+<h2 id="is-a-hijerarhija">13. IS-A hijerarhija</h2>
+<p>IS-A hijerarhija se uvodi kada neka klasa entiteta ima prepoznatljive podskupove sa sopstvenim obeležjima ili vezama.</p>
+<ul>
+<li><strong>Superklasa</strong> – nadtip, sadrži zajednička obeležja i primarni ključ.</li>
+<li><strong>Potklasa</strong> – podtip, sadrži samo specifična obeležja.</li>
+</ul>
+<h3 id="tipovi-is-a-hijerarhije">Tipovi IS-A hijerarhije</h3>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Minimalni (a)</th>
+<th>Maksimalni (b)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Totalna</strong></td>
+<td>1 – svaki nadtip mora biti u nekoj potklasi</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Parcijalna</strong></td>
+<td>0 – ne mora biti ni u jednoj potklasi</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Nepresečna</strong></td>
+<td>—</td>
+<td>1 – može biti u najviše jednoj potklasi</td>
+</tr>
+<tr>
+<td><strong>Presečna</strong></td>
+<td>—</td>
+<td>N – može biti u više potklasa</td>
+</tr>
+</tbody>
+</table><h3 id="prevođenje-u-relacioni-model-2">Prevođenje u relacioni model</h3>
+<p><strong>A – šema za superklasu + šema za svaku potklasu:</strong></p>
+<pre><code>Radnik({MBR, IME, PRZ, ZAN, OZRM}, {MBR})
+Daktilograf({MBR, KLASA}, {MBR})
+Programer({MBR, BRPJEZ}, {MBR})
+
+Daktilograf[MBR] ⊆ Radnik[MBR]
+Programer[MBR]   ⊆ Radnik[MBR]
+
+→ totalna IS-A: Radnik[MBR] ⊆ Daktilograf[MBR] ∪ Programer[MBR] ∪ ...
+</code></pre>
+<p><strong>B – šema samo za svaku potklasu</strong> (primenjivo samo kod totalne IS-A):</p>
+<pre><code>Daktilograf({MBR, IME, PRZ, OZRM, KLASA}, {MBR})
+Programer({MBR, IME, PRZ, OZRM, BRPJEZ}, {MBR})
+→ ZAN se ne navodi — svaka tabela zna svoju klasu
+</code></pre>
+<p><strong>C – jedna šema za sve</strong> (NULL vrednosti za obeležja koja ne važe za dati red, uz ograničenje torke koje povezuje vrstu i obavezna obeležja):</p>
+<pre><code>Radnik({MBR, IME, PRZ, ZAN, OZRM, KLASA, BRPJEZ, SPEC}, {MBR})
+→ ograničenje torke: ZAN='pro' → SPEC≠∅, KLASA=∅, BRPJEZ=∅
+</code></pre>
+<hr>
+<h2 id="tip-poveznika-i-kako-se-formira-ključ">14. Tip poveznika i kako se formira ključ</h2>
+<p><strong>Tip poveznika (TP)</strong> je model veze između tipova entiteta, strukture <code>N(N1, N2, ..., Nm, Q, C)</code> (naziv, povezani TE, sopstvena obeležja, ograničenja).</p>
+<h3 id="kako-se-formira-ključ-tp-u-zavisnosti-od-kardinaliteta">Kako se formira ključ TP u zavisnosti od kardinaliteta</h3>
+
+<table>
+<thead>
+<tr>
+<th>Kardinalitet</th>
+<th>Identifikator TP</th>
+<th>Ključ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>M:N</strong></td>
+<td>(Radnik, Projekat)</td>
+<td><code>Mbr + Spr</code> (kombinacija ključeva oba TE)</td>
+</tr>
+<tr>
+<td><strong>N:1</strong></td>
+<td>(Radnik)</td>
+<td><code>Mbr</code> (samo ključ entiteta sa “N” strane)</td>
+</tr>
+<tr>
+<td><strong>1:1</strong></td>
+<td>(Radnik) i (Polisa)</td>
+<td><code>MBR</code> <strong>ili</strong> <code>BrPol</code> (ključ bilo kog od dva entiteta)</td>
+</tr>
+</tbody>
+</table><p><strong>Logika:</strong> kod M:N je potrebna kombinacija oba ključa jer jedan entitet može učestvovati u više pojava veze sa <strong>različitim</strong> partnerima s obe strane. Kod N:1, entitet sa “1” strane je jednoznačno određen entitetom sa “N” strane, pa ključ te (N) strane dovoljno identifikuje pojavu veze. Kod 1:1, oba entiteta se jednoznačno preslikavaju jedan na drugi, pa je ključ bilo kog dovoljan.</p>
+<p>Ako TP ima i sopstvena obeležja (npr. <code>BR_ČAS</code> kod <code>Radi</code>), ona se <strong>ne uključuju</strong> u ključ, već samo nasleđeni ključevi povezanih entiteta određuju identifikator.</p>
+<hr>
+<h2 id="rekurzivna-veza">15. Rekurzivna veza</h2>
+<p>Rekurzivna veza (rekurzivni tip poveznika) je veza u kojoj <strong>isti tip entiteta</strong> učestvuje sa obe strane.</p>
+<h3 id="primeri-kardinaliteta">Primeri kardinaliteta</h3>
+<p><strong>1 : N rekurzivni</strong> (<code>Rukovodi</code>):</p>
+<blockquote>
+<p>Radnik može imati jednog nadređenog; nadređeni može rukovoditi više radnika.</p>
+</blockquote>
+<p><strong>M : N rekurzivni</strong> (<code>SastojiSe</code>):</p>
+<blockquote>
+<p>Deo se može sastojati od više delova; deo može biti komponenta više drugih delova.</p>
+</blockquote>
+<h3 id="prevođenje-u-relacioni-model-3">Prevođenje u relacioni model</h3>
+<p>Pošto oba “kraja” veze dolaze iz <strong>iste</strong> šeme relacije, potrebno je <strong>preimenovati jedan od ključeva</strong> da bi se izbegla kolizija naziva:</p>
+<pre><code>Proizvod({IDBR, NAZIV, JMER}, {IDBR})
+Sastavnica({IDBR, IDBK, KOL}, {IDBR+IDBK})
+  IDBK = identifikaciona oznaka komponente (preimenovano IDBR)
+
+Sastavnica[IDBR] ⊆ Proizvod[IDBR]   -- "roditeljski" proizvod
+Sastavnica[IDBK] ⊆ Proizvod[IDBR]   -- komponenta
+</code></pre>
+<p>Isti princip preimenovanja ključa se koristi i kada <strong>dva različita</strong> tipa poveznika povezuju iste tipove entiteta (npr. <code>Radi</code> i <code>Održava</code> između <code>Radnik</code> i <code>Mašina</code>), gde se jedna kopija ključa preimenuje da bi se izbegla kolizija skupova obeležja dve vezne tabele.</p>
+<hr>
+<h2 id="šta-su-kursor-i-triger">16. Šta su kursor i triger</h2>
+<h3 id="kursor-cursor">Kursor (CURSOR)</h3>
+<p>Kursor je mehanizam u proceduralnom SQL-u (npr. PL/SQL) koji omogućava <strong>red-po-red obradu</strong> rezultata upita koji vraća više torki (jer standardni SQL radi nad celim skupovima, a proceduralni kod često mora da obrađuje torku po torku).</p>
+<ul>
+<li><strong>Implicitni kursor</strong> – SUBP ga automatski kreira za svaku samostalnu SQL naredbu (npr. jednostavan <code>SELECT INTO</code>, <code>UPDATE</code>, <code>DELETE</code>); programer ga eksplicitno ne deklariše.</li>
+<li><strong>Eksplicitni kursor</strong> – programer ga sam deklariše za <code>SELECT</code> upit koji vraća više redova, i ručno upravlja njegovim životnim ciklusom:
+<ul>
+<li><code>DECLARE CURSOR</code> – deklaracija kursora nad <code>SELECT</code> upitom</li>
+<li><code>OPEN</code> – izvršava upit i postavlja kursor na prvi red</li>
+<li><code>FETCH</code> – učitava tekući red u promenljive i pomera kursor na sledeći</li>
+<li><code>CLOSE</code> – oslobađa resurse kursora</li>
+</ul>
+</li>
+<li>Tipični atributi kursora: <code>%FOUND</code>, <code>%NOTFOUND</code>, <code>%ROWCOUNT</code>, <code>%ISOPEN</code> (Oracle PL/SQL notacija).</li>
+</ul>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">DECLARE</span>
+  <span class="token keyword">CURSOR</span> c_radnici <span class="token operator">IS</span> <span class="token keyword">SELECT</span> MBR<span class="token punctuation">,</span> IME <span class="token keyword">FROM</span> Radnik <span class="token keyword">WHERE</span> ZAN <span class="token operator">=</span> <span class="token string">'programer'</span><span class="token punctuation">;</span>
+  v_mbr Radnik<span class="token punctuation">.</span>MBR<span class="token operator">%</span><span class="token keyword">TYPE</span><span class="token punctuation">;</span>
+  v_ime Radnik<span class="token punctuation">.</span>IME<span class="token operator">%</span><span class="token keyword">TYPE</span><span class="token punctuation">;</span>
+<span class="token keyword">BEGIN</span>
+  <span class="token keyword">OPEN</span> c_radnici<span class="token punctuation">;</span>
+  LOOP
+    <span class="token keyword">FETCH</span> c_radnici <span class="token keyword">INTO</span> v_mbr<span class="token punctuation">,</span> v_ime<span class="token punctuation">;</span>
+    <span class="token keyword">EXIT</span> <span class="token keyword">WHEN</span> c_radnici<span class="token operator">%</span>NOTFOUND<span class="token punctuation">;</span>
+    <span class="token comment">-- obrada reda</span>
+  <span class="token keyword">END</span> LOOP<span class="token punctuation">;</span>
+  <span class="token keyword">CLOSE</span> c_radnici<span class="token punctuation">;</span>
+<span class="token keyword">END</span><span class="token punctuation">;</span>
+</code></pre>
+<h3 id="triger-trigger">Triger (TRIGGER)</h3>
+<p>Triger je proceduralni mehanizam koji se <strong>automatski aktivira</strong> prilikom izvođenja specificirane operacije (<code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>) nad tabelom ili pogledom, ako su ispunjeni definisani uslovi – aktiviranje se <strong>ne može izbeći voljom korisnika</strong> (za razliku od procedura, koje se pozivaju eksplicitno).</p>
+<p>Karakteriše ga: oblast definisanosti (tabela/pogled), vreme okidanja (<code>BEFORE</code>/<code>AFTER</code>/<code>INSTEAD OF</code>), operacije koje ga pokreću, i frekvencija (<code>FOR EACH ROW</code> – Row Level, ili Statement Level). Detaljna sintaksa i primer dati su pod pitanjem 6.</p>
+<hr>
+<h2 id="ograničenje-inverznog-referencijalnog-integriteta">17. Ograničenje inverznog referencijalnog integriteta</h2>
+<p>Standardno ograničenje referencijalnog integriteta ide u smeru <strong>“strani ključ ⊆ referencirani ključ”</strong>, npr. <code>Radi[MBR] ⊆ Radnik[MBR]</code> – svaki radnik naveden u vezi mora zaista postojati u tabeli <code>Radnik</code>.</p>
+<p><strong>Inverzno ograničenje</strong> ide u <strong>suprotnom smeru</strong> – zahteva da svaka vrednost ključa iz “nezavisne” (referencirane) tabele mora da se pojavi i u vezanoj (referencirajućoj) tabeli. Ono je posledica <strong>obaveznog (totalnog) učešća</strong> entiteta u vezi, tj. kada je minimalni kardinalitet sa strane tog entiteta jednak <strong>1</strong>.</p>
+<h3 id="primer-–-binarni-tp-mn-radi-između-radnik-i-projekat">Primer – binarni TP M:N (<code>Radi</code> između <code>Radnik</code> i <code>Projekat</code>)</h3>
+<p>Standardna ograničenja:</p>
+<pre><code>Radi[MBR]  ⊆ Radnik[MBR]
+Radi[OZPR] ⊆ Projekat[OZPR]
+</code></pre>
+<p>Inverzna ograničenja (uslovljena minimalnim kardinalitetom):</p>
+<pre><code>ako a1 = 1 → Radnik[MBR]   ⊆ Radi[MBR]    (svaki radnik mora raditi na nekom projektu)
+ako a2 = 1 → Projekat[OZPR] ⊆ Radi[OZPR]   (svaki projekat mora imati bar jednog radnika)
+</code></pre>
+<h3 id="primer-–-gerund">Primer – gerund</h3>
+<p>Kod gerunda (<code>Poveravanje</code> kao TE za TP <code>Sluša</code>), inverzno ograničenje obezbeđuje da svaka pojava “gornjeg” tipa poveznika ima bar jednu odgovarajuću pojavu u “donjem”:</p>
+<pre><code>Sluša[OZN+OZP]       ⊆ Poveravanje[OZN+OZP]   -- standardno
+Poveravanje[OZN+OZP] ⊆ Sluša[OZN+OZP]          -- inverzno: svako poveravanje mora imati bar jednog studenta
+</code></pre>
+<p><strong>Poenta:</strong> standardno ograničenje referencijalnog integriteta samo osigurava da vezani podaci <strong>postoje</strong> u referenciranoj tabeli; inverzno ograničenje dodatno osigurava da <strong>svaki</strong> entitet sa obaveznim učešćem zaista <strong>učestvuje</strong> u vezi bar jednom – tj. da minimalni kardinalitet (a=1) zaista bude ispoštovan na nivou podataka, što se standardnim FK mehanizmom (koji je jednosmeran) ne može direktno izraziti, već zahteva dodatnu (obično proceduralnu – triger/assertion) proveru.</p>
+
+    </div>
+  </div>
+</body>
+
+</html>

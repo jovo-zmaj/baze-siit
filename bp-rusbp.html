@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bp-rusbp</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#realizacija-ograničenja-pomoću-rsubp----skripta-za-učenje">Realizacija ograničenja pomoću RSUBP – Skripta za učenje</a>
+<ul>
+<li><a href="#šta-je-cilj">Šta je cilj?</a></li>
+</ul>
+</li>
+<li><a href="#ograničenje-domena">1. Ograničenje domena</a></li>
+<li><a href="#ograničenje-vrednosti-obeležja">2. Ograničenje vrednosti obeležja</a></li>
+<li><a href="#ograničenje-torke">3. Ograničenje torke</a></li>
+<li><a href="#primer-tabele">Primer tabele</a>
+<ul>
+<li></li>
+</ul>
+</li>
+<li><a href="#kada-koristiti-koji-mehanizam">Kada koristiti koji mehanizam?</a></li>
+<li><a href="#šta-treba-zapamtiti-za-ispit">Šta treba zapamtiti za ispit</a></li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="realizacija-ograničenja-pomoću-rsubp----skripta-za-učenje">Realizacija ograničenja pomoću RSUBP – Skripta za učenje</h1>
+<h2 id="šta-je-cilj">Šta je cilj?</h2>
+<p>RSUBP omogućava da u bazi definišemo <strong>pravila (ograničenja)</strong> kako bi<br>
+podaci bili ispravni.</p>
+<p>Najčešći načini: - <code>CREATE DOMAIN</code> - <code>CONSTRAINT</code> (<code>NOT NULL</code>, <code>CHECK</code>,<br>
+<code>PRIMARY KEY</code>, <code>FOREIGN KEY</code>) - <code>CREATE TRIGGER</code></p>
+<hr>
+<h1 id="ograničenje-domena">1. Ograničenje domena</h1>
+<p>Određuje <strong>kakve vrednosti sme da ima kolona</strong>.</p>
+<p>Može da se realizuje pomoću: - <code>CREATE DOMAIN</code> - <code>CHECK</code> - <code>TRIGGER</code></p>
+<p>Primer:</p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CHECK</span> <span class="token punctuation">(</span>Plt <span class="token operator">&gt;</span> <span class="token number">500</span><span class="token punctuation">)</span>
+</code></pre>
+<p>➡ Plata mora biti veća od 500.</p>
+<hr>
+<h1 id="ograničenje-vrednosti-obeležja">2. Ograničenje vrednosti obeležja</h1>
+<p>Odnosi se na <strong>jednu kolonu</strong>.</p>
+<p>Najčešće:</p>
+<pre class=" language-sql"><code class="prism  language-sql">Ime <span class="token keyword">VARCHAR</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span>
+</code></pre>
+<p><code>NOT NULL</code> znači da kolona <strong>ne sme biti prazna</strong>.</p>
+<hr>
+<h1 id="ograničenje-torke">3. Ograničenje torke</h1>
+<p>Odnosi se na <strong>više kolona istovremeno</strong>.</p>
+<p>Primer:</p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CHECK</span> <span class="token punctuation">(</span>SUBSTR<span class="token punctuation">(</span>JMBG<span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">)</span><span class="token operator">=</span>TO_CHAR<span class="token punctuation">(</span>DATR<span class="token punctuation">,</span><span class="token string">'DDMMYYY'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>Značenje: - prvih 7 cifara JMBG mora da odgovara datumu rođenja.</p>
+<p>Za ovakva pravila koristi se <code>CHECK</code> ili <code>TRIGGER</code>.</p>
+<hr>
+<h1 id="primer-tabele">Primer tabele</h1>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> Radnik<span class="token punctuation">(</span>
+    Mbr <span class="token keyword">INTEGER</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+    Ime <span class="token keyword">VARCHAR</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+    Prz <span class="token keyword">VARCHAR</span><span class="token punctuation">(</span><span class="token number">25</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+    Sef <span class="token keyword">INTEGER</span><span class="token punctuation">,</span>
+    Plt <span class="token keyword">DECIMAL</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    Pre <span class="token keyword">DECIMAL</span><span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    God <span class="token keyword">DATE</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+
+    <span class="token keyword">CONSTRAINT</span> radnik_PK <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span><span class="token punctuation">(</span>Mbr<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token keyword">CONSTRAINT</span> radnik_FK <span class="token keyword">FOREIGN</span> <span class="token keyword">KEY</span><span class="token punctuation">(</span>Sef<span class="token punctuation">)</span>
+        <span class="token keyword">REFERENCES</span> Radnik<span class="token punctuation">(</span>Mbr<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token keyword">CONSTRAINT</span> radnik_CH <span class="token keyword">CHECK</span><span class="token punctuation">(</span>Plt <span class="token operator">&gt;</span> <span class="token number">500</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h3 id="šta-rade-ograničenja">Šta rade ograničenja?</h3>
+<ul>
+<li><code>NOT NULL</code> → vrednost mora postojati.</li>
+<li><code>PRIMARY KEY</code> → jedinstveno identifikuje svaki red.</li>
+<li><code>FOREIGN KEY</code> → povezuje tabelu sa drugom tabelom.</li>
+<li><code>CHECK</code> → proverava uslov.</li>
+</ul>
+<hr>
+<h1 id="kada-koristiti-koji-mehanizam">Kada koristiti koji mehanizam?</h1>
+<p>Situacija                  Koristi se</p>
+<hr>
+<p>Ograničenje jedne kolone   <code>NOT NULL</code>, <code>CHECK</code><br>
+Ograničenje više kolona    <code>CHECK</code><br>
+Povezivanje tabela         <code>FOREIGN KEY</code><br>
+Složena pravila            <code>TRIGGER</code><br>
+Definisanje domena         <code>CREATE DOMAIN</code></p>
+<hr>
+<h1 id="šta-treba-zapamtiti-za-ispit">Šta treba zapamtiti za ispit</h1>
+<ul>
+<li><code>CREATE DOMAIN</code> definiše dozvoljene vrednosti domena.</li>
+<li><code>NOT NULL</code> zabranjuje NULL vrednosti.</li>
+<li><code>CHECK</code> proverava logički uslov.</li>
+<li><code>PRIMARY KEY</code> = jedinstven + ne sme biti NULL.</li>
+<li><code>FOREIGN KEY</code> povezuje dve tabele.</li>
+<li><code>TRIGGER</code> se koristi kada <code>CHECK</code> nije dovoljan ili je potrebno<br>
+izvršiti dodatne akcije.</li>
+</ul>
+
+    </div>
+  </div>
+</body>
+
+</html>

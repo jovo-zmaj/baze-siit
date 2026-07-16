@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BP Learning Hub</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+    background-size:400% 400%;
+    animation:bgMove 12s ease infinite;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:40px;
+}
+
+@keyframes bgMove{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+.container{
+    width:900px;
+    max-width:100%;
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(18px);
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+p{
+    text-align:center;
+    opacity:.8;
+    margin-bottom:25px;
+}
+
+#search{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    margin-bottom:25px;
+    outline:none;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:18px;
+}
+
+.card{
+    background:rgba(255,255,255,.12);
+    border-radius:14px;
+    padding:18px;
+    text-decoration:none;
+    color:white;
+    transition:.25s;
+    border:1px solid rgba(255,255,255,.1);
+}
+
+.card:hover{
+    transform:translateY(-6px) scale(1.03);
+    background:rgba(255,255,255,.2);
+}
+
+.card h2{
+    font-size:18px;
+    margin-bottom:8px;
+}
+
+.card small{
+    opacity:.7;
+}
+
+.footer{
+    margin-top:30px;
+    text-align:center;
+}
+
+button{
+    margin:5px;
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:.2s;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+#randomBtn{
+    background:#22c55e;
+    color:white;
+}
+
+#themeBtn{
+    background:#facc15;
+}
+
+.light{
+    background:linear-gradient(135deg,#dbeafe,#ffffff,#bfdbfe);
+    color:#111;
+}
+
+.light .container{
+    background:rgba(255,255,255,.8);
+}
+
+.light .card{
+    color:#111;
+    background:white;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>📚 BP Learning Hub</h1>
+<p>Select a topic or search for one.</p>
+
+<input type="text" id="search" placeholder="🔍 Search topics...">
+
+<div class="grid" id="grid">
+
+<a class="card" href="bp-er-dijag.html">
+<h2>ER Dijagram</h2>
+<small>Entity-Relationship diagrams</small>
+</a>
+
+<a class="card" href="bp-modeli-podataka.html">
+<h2>Modeli Podataka</h2>
+<small>Data models</small>
+</a>
+
+<a class="card" href="bp-nabrajanja.html">
+<h2>Nabrajanja</h2>
+<small>Enumerations</small>
+</a>
+
+<a class="card" href="bp-prevodjenje.html">
+<h2>Prevođenje</h2>
+<small>Translation</small>
+</a>
+
+<a class="card" href="bp-relacioni-model.html">
+<h2>Relacioni Model</h2>
+<small>Relational model</small>
+</a>
+
+<a class="card" href="bp-rusbp.html">
+<h2>RUSBP</h2>
+<small>Course material</small>
+</a>
+
+<a class="card" href="bp-subp.html">
+<h2>SUBP</h2>
+<small>Database systems</small>
+</a>
+
+<a class="card" href="bp-usmeni.html">
+<h2>Usmeni</h2>
+<small>Oral exam</small>
+</a>
+
+<a class="card" href="bp-uvod.html">
+<h2>Uvod</h2>
+<small>Introduction</small>
+</a>
+
+</div>
+
+<div class="footer">
+<button id="randomBtn">🎲 Random Topic</button>
+<button id="themeBtn">🌙 Toggle Theme</button>
+</div>
+
+</div>
+
+<script>
+const search=document.getElementById("search");
+const cards=document.querySelectorAll(".card");
+
+search.addEventListener("input",()=>{
+    const value=search.value.toLowerCase();
+
+    cards.forEach(card=>{
+        card.style.display=
+        card.innerText.toLowerCase().includes(value)
+        ? "block"
+        : "none";
+    });
+});
+
+document.getElementById("randomBtn").onclick=()=>{
+    const visible=[...cards].filter(c=>c.style.display!="none");
+    const random=visible[Math.floor(Math.random()*visible.length)];
+    window.location=random.href;
+};
+
+document.getElementById("themeBtn").onclick=()=>{
+    document.body.classList.toggle("light");
+};
+
+document.addEventListener("keydown",(e)=>{
+    if(e.key=="/"){
+        e.preventDefault();
+        search.focus();
+    }
+});
+</script>
+
+</body>
+</html>

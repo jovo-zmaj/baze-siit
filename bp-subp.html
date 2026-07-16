@@ -1,0 +1,912 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bp-subp</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#realizacija-ograničenja-šeme-rbp-putem-subp">Realizacija ograničenja šeme RBP putem SUBP</a>
+<ul>
+<li><a href="#sadržaj-iz-prezentacije">Sadržaj (iz prezentacije)</a></li>
+<li><a href="#cilj">Cilj</a></li>
+<li><a href="#realizacija-integritetne-komponente-šeme-bp">Realizacija integritetne komponente šeme BP</a></li>
+<li><a href="#parametri-ograničenja">Parametri ograničenja</a></li>
+<li><a href="#implementacija-i-kontrola-ograničenja">Implementacija i kontrola ograničenja</a></li>
+<li><a href="#prednosti-realizacije-ograničenja-putem-subp">Prednosti realizacije ograničenja putem SUBP</a></li>
+<li><a href="#nedostaci">Nedostaci</a></li>
+<li><a href="#kratak-rezimе-za-ispit">Kratak rezimе za ispit</a></li>
+<li><a href="#karakteristike-tipa-ograničenja">Karakteristike tipa ograničenja</a></li>
+<li><a href="#tipovi-ograničenja-u-rmp">Tipovi ograničenja u RMP</a></li>
+<li><a href="#tipovi-akcija-očuvanja-konzistentnosti">Tipovi akcija očuvanja konzistentnosti</a></li>
+<li><a href="#primer-tipova-akcija">Primer tipova akcija</a></li>
+<li><a href="#kratak-rezime-za-ispit-deo-2">Kratak rezime za ispit (deo 2)</a></li>
+</ul>
+</li>
+<li><a href="#mehanizmi-rsubp-–-deklarativni-mehanizmi">Mehanizmi RSUBP – deklarativni mehanizmi</a>
+<ul>
+<li><a href="#namena-mehanizama-rsubp">Namena mehanizama RSUBP</a></li>
+<li><a href="#implementacija-skupa-šema-relacija">Implementacija skupa šema relacija</a></li>
+<li><a href="#implementacija-ograničenja-šeme-bp-–-dve-grupe-mehanizama">Implementacija ograničenja šeme BP – dve grupe mehanizama</a></li>
+<li><a href="#create-domain">CREATE DOMAIN</a></li>
+<li><a href="#sql-klauzula-constraint-–-opšti-pregled">SQL klauzula CONSTRAINT – opšti pregled</a></li>
+<li><a href="#not-null">NOT NULL</a></li>
+<li><a href="#primary-key-lista_obeležja">PRIMARY KEY [(Lista_obeležja)]</a></li>
+<li><a href="#unique-lista_obeležja">UNIQUE [(Lista_obeležja)]</a></li>
+<li><a href="#check-logičkiizraz">CHECK (LogičkiIzraz)</a></li>
+<li><a href="#foreign-key">FOREIGN KEY</a></li>
+<li><a href="#proceduralni-mehanizmi-1">Proceduralni mehanizmi</a></li>
+<li><a href="#specifikacija-trigera">Specifikacija trigera</a></li>
+<li><a href="#dml-trigeri-–-komponente">DML trigeri – komponente</a></li>
+<li><a href="#oblikovanje-trigera-baze-podataka">Oblikovanje trigera baze podataka</a></li>
+<li><a href="#procedure-i-funkcije">Procedure i funkcije</a></li>
+<li><a href="#kratak-rezime-za-ispit">Kratak rezime za ispit</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="realizacija-ograničenja-šeme-rbp-putem-subp">Realizacija ograničenja šeme RBP putem SUBP</h1>
+<h2 id="sadržaj-iz-prezentacije">Sadržaj (iz prezentacije)</h2>
+<ul>
+<li>Uvodne napomene</li>
+<li>Tipovi ograničenja u RMP</li>
+<li>Mehanizmi RSUBP</li>
+<li>Realizacija ograničenja pomoću RSUBP</li>
+</ul>
+<hr>
+<h2 id="cilj">Cilj</h2>
+<p>Sva ograničenja realizovati <strong>na nivou servera BP</strong>, putem mehanizama koje poseduje SUBP.</p>
+<p>Šematski, sistem izgleda ovako:</p>
+<pre><code>Aplikacije (web / GUI / karakter orijentisane / višeslojne arhitekture)
+        │  SQL naredbe
+        ▼
+   ┌─────────────────────────────┐
+   │   SUBP                      │
+   │   ┌───────────────────┐     │
+   │   │ Podaci u BP       │     │
+   │   ├───────────────────┤     │
+   │   │ Kontrola          │     │
+   │   │ ograničenja       │     │
+   │   └───────────────────┘     │
+   └─────────────────────────────┘
+        │  Odgovori
+        ▼
+SQL orijentisani programi (interaktivne SQL naredbe / SQL script programi)
+
+</code></pre>
+<p>Ideja: kontrola ograničenja se nalazi <strong>unutar</strong> SUBP-a, a ne u aplikaciji.</p>
+<h2 id="realizacija-integritetne-komponente-šeme-bp">Realizacija integritetne komponente šeme BP</h2>
+<h3 id="zašto-je-kontrola-na-nivou-subp-centralna">Zašto je kontrola na nivou SUBP centralna</h3>
+<ul>
+<li>Ne može je zaobići <strong>nijedan program ili korisnik</strong>.</li>
+<li>Korisnici <strong>nisu svesni</strong> postojanja ograničenja, sve dok ono ne bude narušeno.</li>
+<li>U slučaju pokušaja narušavanja ograničenja nekom operacijom ažuriranja, SUBP:
+<ul>
+<li><strong>aktivnim mehanizmom</strong> dovodi bazu u konzistentno stanje, <strong>ili</strong></li>
+<li><strong>izaziva grešku</strong> i prekida operaciju.</li>
+</ul>
+</li>
+<li>Poruka o grešci se prosleđuje korisničkom programu → program je obrađuje i prosleđuje korisniku.</li>
+</ul>
+<h3 id="implementacija-ograničenja-šeme-bp-–-opšti-koraci">Implementacija ograničenja šeme BP – opšti koraci</h3>
+<ol>
+<li>Zadaju se <strong>parametri ograničenja</strong>.</li>
+<li>Definiše se <strong>ograničenje</strong> datog tipa.</li>
+<li>Definišu se <strong>operacije (događaji)</strong> nad BP koje mogu dovesti do narušavanja ograničenja.</li>
+<li>Za svaku operaciju definiše se <strong>aktivnost (akcija)</strong> očuvanja konzistentnosti BP, u slučaju pokušaja narušavanja.</li>
+</ol>
+<p>SUBP zatim obezbeđuje <strong>automatsku proveru</strong> važenja ograničenja, u skladu sa definisanim parametrima.</p>
+<hr>
+<h2 id="parametri-ograničenja">Parametri ograničenja</h2>
+<h3 id="obeležja-i-šeme-relacija">1) Obeležja i šeme relacija</h3>
+<p>Svako ograničenje je vezano za određena obeležja i određene šeme relacija šeme BP.</p>
+<h3 id="operacije-događaji-koje-mogu-narušiti-ograničenje">2) Operacije (događaji) koje mogu narušiti ograničenje</h3>
+<ul>
+<li><strong>Upis</strong> nove torke u relaciju</li>
+<li><strong>Brisanje</strong> postojeće torke iz relacije</li>
+<li><strong>Modifikacija</strong> vrednosti postojeće torke u relaciji</li>
+</ul>
+<p>(nad čijom šemom relacije je ograničenje definisano)</p>
+<h3 id="akcije-očuvanja-konzistentnosti-bp">3) Akcije očuvanja konzistentnosti BP</h3>
+<p>Vezuju se za svaku operaciju koja može narušiti ograničenje. Dele se na:</p>
+
+<table>
+<thead>
+<tr>
+<th>Tip akcije</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pasivne</strong></td>
+<td>Sprečavanje operacije koja bi narušila ograničenje</td>
+</tr>
+<tr>
+<td><strong>Aktivne</strong></td>
+<td>Automatsko sprovođenje daljih operacija ažuriranja nad BP koje obezbeđuju očuvanje konzistentnosti (očuvanjem propisanih odnosa između podataka)</td>
+</tr>
+<tr>
+<td><strong>Kombinovane</strong></td>
+<td>Pod određenim uslovima aktivne, a pod drugim uslovima pasivne</td>
+</tr>
+</tbody>
+</table><hr>
+<h2 id="implementacija-i-kontrola-ograničenja">Implementacija i kontrola ograničenja</h2>
+<h3 id="implementacija">Implementacija</h3>
+<ul>
+<li>Ograničenja se implementiraju pomoću <strong>mehanizma SUBP</strong>.</li>
+<li>Mehanizmu se, direktno ili posredno, pridružuju svi parametri ograničenja:
+<ul>
+<li>definicija ograničenja</li>
+<li><strong>kritične operacije</strong> – koje mogu narušiti ograničenje</li>
+<li>za svaku kritičnu operaciju → <strong>akcija</strong> očuvanja konzistentnosti BP</li>
+</ul>
+</li>
+</ul>
+<h3 id="kontrola">Kontrola</h3>
+<ul>
+<li>SUBP <strong>automatski</strong> pokreće mehanizam kontrole važenja ograničenja</li>
+<li>Kontrola se pokreće <strong>nakon izvođenja kritične operacije</strong> za dato ograničenje</li>
+</ul>
+<hr>
+<h2 id="prednosti-realizacije-ograničenja-putem-subp">Prednosti realizacije ograničenja putem SUBP</h2>
+<ul>
+<li><strong>Automatska kontrola</strong> implementiranih ograničenja na nivou SUBP</li>
+<li>Obezbeđena <strong>konzistentnost BP u svakom trenutku</strong>
+<ul>
+<li>ne može se narušiti upotrebom netestiranih aplikacija ili interaktivnog SQL-a</li>
+</ul>
+</li>
+<li><strong>Standardizacija</strong> načina implementacije ograničenja (prateći standardi):
+<ul>
+<li>ANSI SQL-92 (SQL2)</li>
+<li>ANSI SQL:1999 (SQL3)</li>
+<li>ANSI SQL:2003</li>
+<li>ANSI SQL:2006 (ISO/IEC 9075-14:2006)</li>
+</ul>
+</li>
+<li><strong>Ne postoje funkcionalni razlozi</strong> za realizaciju ograničenja unutar aplikativnih programa
+<ul>
+<li>ograničenja se implementiraju i kontrolišu <strong>jedanput</strong>, na nivou SUBP</li>
+<li>ne implementiraju se i ne kontrolišu na nivou aplikativnih programa</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="nedostaci">Nedostaci</h2>
+<ul>
+<li><strong>Povišen stepen zavisnosti</strong> šeme BP od proizvođača, tipa i verzije SUBP
+<ul>
+<li>ne podržavaju svi SUBP, u istoj meri, postojeće standarde</li>
+<li>standardi generalno nisu “idealni” – ne pokrivaju uvek sve neophodne detalje</li>
+</ul>
+</li>
+<li><strong>Ostaje potreba</strong> za realizacijom nekih ograničenja unutar programa
+<ul>
+<li>zbog obezbeđenja pogodnosti programa za upotrebu</li>
+<li>→ dolazi do <strong>dvostruke implementacije i kontrole</strong> ograničenja (i na nivou SUBP i na nivou aplikacije)</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="kratak-rezimе-za-ispit">Kratak rezimе za ispit</h2>
+<ul>
+<li>Cilj: sva ograničenja → na nivou SUBP, ne u aplikaciji.</li>
+<li>Kontrola je centralna, automatska, ne može se zaobići.</li>
+<li>Reakcija na narušavanje: <strong>pasivna</strong> (blokiraj) / <strong>aktivna</strong> (automatski ispravi) / <strong>kombinovana</strong>.</li>
+<li>Kritične operacije: <strong>INSERT, DELETE, UPDATE</strong>.</li>
+<li>Standardizovano kroz SQL standarde (SQL2 → SQL:2006).</li>
+<li>Prednost: jedna implementacija, garantovana konzistentnost.</li>
+<li>Mana: zavisnost od SUBP-a i mogућа dvostruka implementacija.</li>
+</ul>
+<hr>
+<h2 id="karakteristike-tipa-ograničenja">Karakteristike tipa ograničenja</h2>
+<p>Karakteristike tipa ograničenja u modelu podataka (MP):</p>
+<ul>
+<li><strong>Oblast definisanosti</strong> – tip logičke strukture obeležja nad kojom se ograničenje definiše</li>
+<li><strong>Oblast interpretacije</strong> – tip logičke strukture podataka nad kojom se ograničenje interpretira</li>
+<li><strong>Formalizam za zapisivanje</strong> (definicija)</li>
+<li><strong>Pravilo za interpretaciju</strong> (validaciju)</li>
+<li><strong>Skup kritičnih operacija</strong> nad bazom podataka
+<ul>
+<li>koje mogu dovesti do narušavanja ograničenja datog tipa</li>
+</ul>
+</li>
+<li><strong>Skup mogućih akcija</strong> kojima se obezbeđuje očuvanje validnosti baze podataka
+<ul>
+<li>pri pokušaju narušavanja ograničenja datog tipa</li>
+<li>definiše se za svaku kritičnu operaciju</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="tipovi-ograničenja-u-rmp">Tipovi ograničenja u RMP</h2>
+<p>Mogući tipovi ograničenja u relacionom modelu podataka (RMP):</p>
+<ul>
+<li>ograničenje domena</li>
+<li>ograničenje vrednosti obeležja</li>
+<li>ograničenje torke</li>
+<li>ograničenje ključa</li>
+<li>ograničenje jedinstvenosti</li>
+<li>zavisnost sadržavanja</li>
+<li>ograničenje referencijalnog integriteta</li>
+<li>…</li>
+</ul>
+<hr>
+<h2 id="tipovi-akcija-očuvanja-konzistentnosti">Tipovi akcija očuvanja konzistentnosti</h2>
+<p>Akcije koje se preduzimaju pri pokušaju narušavanja ograničenja BP:</p>
+<h3 id="pasivne-akcije">Pasivne akcije</h3>
+
+<table>
+<thead>
+<tr>
+<th>Akcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NoAction (Restrict)</strong></td>
+<td>Zabrana sprovođenja operacije koja bi izazvala narušavanje kontrolisanog ograničenja</td>
+</tr>
+</tbody>
+</table><h3 id="aktivne-akcije">Aktivne akcije</h3>
+
+<table>
+<thead>
+<tr>
+<th>Akcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cascade</strong></td>
+<td>Kaskadna propagacija operacije na podatke povezane s podacima koji se ažuriraju i kontrolišu putem ograničenja</td>
+</tr>
+<tr>
+<td><strong>SetNull</strong></td>
+<td>Svođenje na NULL vrednost podataka povezanih s podacima koji se ažuriraju i kontrolišu putem ograničenja</td>
+</tr>
+<tr>
+<td><strong>SetDefault</strong></td>
+<td>Svođenje na predefinisane (inicijalne) vrednosti podataka povezanih s podacima koji se ažuriraju i kontrolišu putem ograničenja</td>
+</tr>
+<tr>
+<td><strong><code>&lt;&lt;UserDef&gt;&gt;</code></strong></td>
+<td>Specifikacija korisnički definisane akcije – posebno isprojektovane i isprogramirane, specificirane putem unapred određene sintakse</td>
+</tr>
+</tbody>
+</table><hr>
+<h2 id="primer-tipova-akcija">Primer tipova akcija</h2>
+<p>Ograničenje referencijalnog integriteta:</p>
+<pre><code>Faktura[IdPP] ⊆ PoslPart[IdPP]
+</code></pre>
+<ul>
+<li><strong>Operacija:</strong> brisanje poslovnog partnera iz evidencije</li>
+<li><strong>SQL:</strong> <code>DELETE FROM PoslPart WHERE IdPP = x</code></li>
+</ul>
+<p>Posmatraju se dva slučaja brisanja: partner <code>x</code> (bez faktura) i partner <code>y</code> (postoje fakture vezane za njega, <code>Faktura.IdPP = y</code>).</p>
+<h3 id="partner-x-–-nema-povezanih-faktura">1) Partner <code>x</code> – nema povezanih faktura</h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">DELETE</span> <span class="token keyword">FROM</span> PoslPart <span class="token keyword">WHERE</span> IdPP <span class="token operator">=</span> x
+</code></pre>
+<ul>
+<li>Nema faktura sa <code>IdPP = x</code> → brisanje se izvršava bez problema, ograničenje nije ni ugroženo.</li>
+</ul>
+<h3 id="partner-y-–-postoje-povezane-fakture-akcija-noaction-restrict">2) Partner <code>y</code> – postoje povezane fakture, akcija: <strong>NoAction (Restrict)</strong></h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">DELETE</span> <span class="token keyword">FROM</span> PoslPart <span class="token keyword">WHERE</span> IdPP <span class="token operator">=</span> y
+</code></pre>
+<ul>
+<li>Postoje fakture sa <code>IdPP = y</code> → brisanje bi narušilo referencijalni integritet.</li>
+<li>Akcija <strong>NoAction/Restrict</strong> → operacija se <strong>odbija</strong>, partner <code>y</code> ostaje u <code>PoslPart</code>, fakture ostaju netaknute.</li>
+</ul>
+<h3 id="partner-y-–-akcija-cascade">3) Partner <code>y</code> – akcija: <strong>Cascade</strong></h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">DELETE</span> <span class="token keyword">FROM</span> PoslPart <span class="token keyword">WHERE</span> IdPP <span class="token operator">=</span> y
+</code></pre>
+<ul>
+<li>Partner <code>y</code> se briše iz <code>PoslPart</code>.</li>
+<li><strong>Kaskadno</strong> se brišu i sve povezane fakture iz <code>Faktura</code> (sve torke sa <code>IdPP = y</code>).</li>
+</ul>
+<h3 id="partner-y-–-akcija-setnull">4) Partner <code>y</code> – akcija: <strong>SetNull</strong></h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">DELETE</span> <span class="token keyword">FROM</span> PoslPart <span class="token keyword">WHERE</span> IdPP <span class="token operator">=</span> y
+</code></pre>
+<ul>
+<li>Partner <code>y</code> se briše iz <code>PoslPart</code>.</li>
+<li>Sve povezane fakture <strong>ostaju</strong>, ali im se vrednost <code>IdPP</code> postavlja na <strong>NULL</strong>.</li>
+</ul>
+<h3 id="partner-y-–-akcija-setdefault">5) Partner <code>y</code> – akcija: <strong>SetDefault</strong></h3>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">DELETE</span> <span class="token keyword">FROM</span> PoslPart <span class="token keyword">WHERE</span> IdPP <span class="token operator">=</span> y
+</code></pre>
+<ul>
+<li>Partner <code>y</code> se briše iz <code>PoslPart</code>.</li>
+<li>Sve povezane fakture <strong>ostaju</strong>, ali im se vrednost <code>IdPP</code> postavlja na <strong>unapred definisanu podrazumevanu (default) vrednost</strong> (npr. šifra “generičkog”/nepoznatog partnera).</li>
+</ul>
+<blockquote>
+<p><strong>Poenta primera:</strong> za isto ograničenje (<code>Faktura[IdPP] ⊆ PoslPart[IdPP]</code>) i istu kritičnu operaciju (DELETE nad <code>PoslPart</code>), izbor akcije (NoAction / Cascade / SetNull / SetDefault) potpuno menja ponašanje sistema i posledice po povezane podatke u <code>Faktura</code>.</p>
+</blockquote>
+<hr>
+<h2 id="kratak-rezime-za-ispit-deo-2">Kratak rezime za ispit (deo 2)</h2>
+<ul>
+<li>Tip ograničenja karakterišu: oblast definisanosti, oblast interpretacije, formalizam zapisa, pravilo validacije, kritične operacije, moguće akcije.</li>
+<li>Tipovi ograničenja u RMP: domena, vrednosti obeležja, torke, ključa, jedinstvenosti, zavisnost sadržavanja, referencijalni integritet.</li>
+<li>Pasivna akcija: <strong>NoAction/Restrict</strong> (zabrani operaciju).</li>
+<li>Aktivne akcije: <strong>Cascade</strong> (propagiraj), <strong>SetNull</strong> (postavi NULL), <strong>SetDefault</strong> (postavi default), <strong>UserDef</strong> (korisnički definisano).</li>
+<li>Klasičan primer: FK ograničenje <code>Faktura[IdPP] ⊆ PoslPart[IdPP]</code> + DELETE nad <code>PoslPart</code> → različiti ishodi zavisno od izabrane akcije.</li>
+</ul>
+<h1 id="mehanizmi-rsubp-–-deklarativni-mehanizmi">Mehanizmi RSUBP – deklarativni mehanizmi</h1>
+<h2 id="namena-mehanizama-rsubp">Namena mehanizama RSUBP</h2>
+<p>Mehanizmi RSUBP su namenjeni za implementaciju:</p>
+<ul>
+<li><strong>skupa šema relacija</strong> šeme BP</li>
+<li><strong>ograničenja (integritetne komponente)</strong> šeme BP</li>
+<li><strong>ostalih pravila poslovanja</strong>, koja <strong>ne rezultuju</strong> u ograničenjima šeme BP
+<ul>
+<li>odnose se, obično, na:
+<ul>
+<li>unapred definisani redosled, obaveze i uslovljenosti izvođenja operacija nad BP, ili</li>
+<li>obavezu izvođenja nekih operacija nad BP, pod određenim uslovima, definisanim putem odnosa vrednosti obeležja u BP</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="implementacija-skupa-šema-relacija">Implementacija skupa šema relacija</h2>
+<ul>
+<li><strong>Kreiranje, modifikovanje i brisanje korisnički definisanog domena</strong>
+<ul>
+<li><code>CREATE DOMAIN</code>, <code>ALTER DOMAIN</code>, <code>DROP DOMAIN</code></li>
+</ul>
+</li>
+<li><strong>Kreiranje, modifikovanje i brisanje složenog tipa podatka</strong>
+<ul>
+<li><code>CREATE TYPE</code>, <code>DROP TYPE</code></li>
+</ul>
+</li>
+<li><strong>Kreiranje, modifikovanje i brisanje tabele (šeme relacije)</strong>
+<ul>
+<li><code>CREATE TABLE</code>, <code>ALTER TABLE</code>, <code>DROP TABLE</code></li>
+</ul>
+</li>
+<li><strong>Dodavanje, modifikovanje i brisanje kolone tabele (obeležja šeme relacije)</strong>
+<ul>
+<li><code>ALTER TABLE / ADD, MODIFY, DROP</code></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="implementacija-ograničenja-šeme-bp-–-dve-grupe-mehanizama">Implementacija ograničenja šeme BP – dve grupe mehanizama</h2>
+<h3 id="deklarativni-mehanizmi">Deklarativni mehanizmi</h3>
+<ul>
+<li>Aktivnosti provere važenja ograničenja i očuvanja konzistentnosti se, <strong>većim delom, podrazumevaju</strong>.</li>
+<li>Ne zahtevaju programiranje procedure kontrole ograničenja.</li>
+<li>Mehanizmi:
+<ul>
+<li>SQL klauzula <code>CONSTRAINT</code></li>
+<li><code>CREATE DOMAIN</code></li>
+<li><code>CREATE ASSERTION</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="proceduralni-mehanizmi">Proceduralni mehanizmi</h3>
+<ul>
+<li>Aktivnosti provere važenja ograničenja i očuvanja konzistentnosti se, <strong>većim delom, programiraju</strong>, putem proceduralnog jezika.</li>
+<li>Mehanizmi:
+<ul>
+<li><code>CREATE TRIGGER</code></li>
+<li><code>CREATE PROCEDURE</code>, <code>CREATE FUNCTION</code></li>
+<li><code>CREATE PACKAGE</code>, <code>CREATE PACKAGE BODY</code></li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>Proceduralni mehanizmi se koriste i za implementaciju <strong>pravila poslovanja koja ne rezultuju u ograničenjima šeme BP</strong> (isti skup naredbi: TRIGGER, PROCEDURE, FUNCTION, PACKAGE).</p>
+</blockquote>
+<h3 id="kada-se-koji-mehanizam-koristi">Kada se koji mehanizam koristi</h3>
+
+<table>
+<thead>
+<tr>
+<th>Mehanizam</th>
+<th>Kada se koristi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Deklarativni</strong></td>
+<td>Implementacija ograničenja na, najvećim delom, podrazumevani način – bez programiranja procedure kontrole</td>
+</tr>
+<tr>
+<td><strong>Proceduralni</strong></td>
+<td>Implementacija ograničenja koja se ne mogu u potpunosti opisati deklarativnim mehanizmima; implementacija pravila poslovanja koja ne rezultuju u ograničenjima šeme BP</td>
+</tr>
+</tbody>
+</table><hr>
+<h2 id="create-domain">CREATE DOMAIN</h2>
+<p>Kreiranje korisnički definisanog domena.</p>
+<p><strong>Opšti oblik sintakse:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> DOMAIN Naziv_domena
+<span class="token punctuation">[</span><span class="token keyword">AS</span><span class="token punctuation">]</span> Tip_podatka <span class="token punctuation">[</span><span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">DEFAULT</span> {Konstanta <span class="token operator">|</span> Funkcija <span class="token operator">|</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">CHECK</span> <span class="token punctuation">(</span>LogičkiIzraz<span class="token punctuation">)</span><span class="token punctuation">]</span>
+</code></pre>
+<ul>
+<li><code>Dužina</code> se navodi kada je to dozvoljeno i potrebno.</li>
+<li><code>LogičkiIzraz</code> mora biti izračunljiv.</li>
+<li>Oznaka za bilo koju vrednost u <code>LogičkomIzrazu</code> je <strong>VALUE</strong>.</li>
+<li>Konkretni SUBP <strong>ne podržavaju uvek</strong> ovaj mehanizam.</li>
+</ul>
+<hr>
+<h2 id="sql-klauzula-constraint-–-opšti-pregled">SQL klauzula CONSTRAINT – opšti pregled</h2>
+<ul>
+<li>Deklarativno definisanje ograničenja, različitih tipova.</li>
+<li>Predstavlja sastavni deo naredbe <code>CREATE TABLE</code> ili <code>ALTER TABLE</code>:
+<ul>
+<li><code>CREATE TABLE (..., CONSTRAINT ...)</code></li>
+<li><code>ALTER TABLE ADD CONSTRAINT ...</code></li>
+<li><code>ALTER TABLE DROP CONSTRAINT ...</code></li>
+</ul>
+</li>
+<li>Većina SUBP podržava ovaj mehanizam u određenoj meri.</li>
+</ul>
+<p><strong>Opšti oblik sintakse:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token punctuation">[</span><span class="token keyword">CONSTRAINT</span> NazivOgr<span class="token punctuation">]</span> SpecifikacijaTipaOgraničenja
+{ <span class="token keyword">CHECK</span> <span class="token operator">|</span> <span class="token keyword">NOCHECK</span> } <span class="token keyword">CONSTRAINT</span>
+{ <span class="token keyword">ALL</span> <span class="token operator">|</span> NazivOgraničenja }
+</code></pre>
+<p><strong>SpecifikacijaTipaOgraničenja</strong> može biti:</p>
+
+<table>
+<thead>
+<tr>
+<th>Specifikacija</th>
+<th>Tip ograničenja</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NOT NULL</code></td>
+<td>ograničenje nula vrednosti</td>
+</tr>
+<tr>
+<td><code>PRIMARY KEY ...</code></td>
+<td>ograničenje primarnog ključa</td>
+</tr>
+<tr>
+<td><code>UNIQUE ...</code></td>
+<td>ograničenje jedinstvenosti</td>
+</tr>
+<tr>
+<td><code>CHECK ...</code></td>
+<td>ograničenje torke</td>
+</tr>
+<tr>
+<td><code>FOREIGN KEY ...</code></td>
+<td>ograničenje stranog ključa</td>
+</tr>
+</tbody>
+</table><hr>
+<h2 id="not-null">NOT NULL</h2>
+<ul>
+<li>Uvek se zadaje <strong>na nivou obeležja</strong> šeme relacije (kolone tabele).</li>
+</ul>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">CONSTRAINT</span> Naziv <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<ul>
+<li>Proverava se prilikom svakog pokušaja:
+<ul>
+<li>upisa nove vrednosti obeležja, ili</li>
+<li>modifikacije postojeće vrednosti obeležja</li>
+</ul>
+</li>
+<li>Jedina moguća aktivnost pri narušavanju: <strong>sprečavanje operacije (NO ACTION)</strong>.</li>
+<li>Svi savremeni SUBP podržavaju klauzulu <code>NOT NULL</code>.</li>
+</ul>
+<hr>
+<h2 id="primary-key-lista_obeležja">PRIMARY KEY [(Lista_obeležja)]</h2>
+<ul>
+<li>Zadaje se:
+<ul>
+<li><strong>na nivou obeležja</strong> šeme relacije koje jedino predstavlja primarni ključ – bez navođenja liste obeležja, ili</li>
+<li><strong>na nivou celokupne šeme relacije</strong> (tabele) – sa navođenjem liste obeležja (uobičajeno i opštije rešenje)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Zadavanje na nivou obeležja:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Zadavanje na nivou šeme relacije:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span>
+  lista specifikacija kolona tabele<span class="token punctuation">,</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span>Lista_obeležja<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<ul>
+<li>Podrazumeva se, <strong>bez posebnog deklarisanja</strong>, da je svako obeležje u <code>Lista_obeležja</code> deklarisano kao <code>NOT NULL</code>.</li>
+<li>Proverava se prilikom svakog pokušaja upisa/modifikacije vrednosti obeležja ključa.</li>
+<li>Jedina moguća aktivnost pri narušavanju: <strong>NO ACTION</strong>.</li>
+<li>Svi savremeni SUBP podržavaju <code>PRIMARY KEY</code>.</li>
+<li>Kod nekih SUBP, deklarisanje ove klauzule automatski izaziva kreiranje <strong>“unique” indeksa (B⁺ stabla)</strong> nad <code>Lista_obeležja</code>.</li>
+</ul>
+<hr>
+<h2 id="unique-lista_obeležja">UNIQUE [(Lista_obeležja)]</h2>
+<ul>
+<li>Zadaje se:
+<ul>
+<li><strong>na nivou obeležja</strong> šeme relacije koje jedino zadovoljava ograničenje jedinstvenosti – bez navođenja liste obeležja, ili</li>
+<li><strong>na nivou celokupne šeme relacije</strong> (tabele) – sa navođenjem liste obeležja koja zadovoljava svojstvo jedinstvenosti (uobičajeno i opštije rešenje)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Zadavanje na nivou obeležja:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">UNIQUE</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">UNIQUE</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Zadavanje na nivou šeme relacije:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span>
+  lista specifikacija kolona tabele<span class="token punctuation">,</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">UNIQUE</span> <span class="token punctuation">(</span>Lista_obeležja<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<ul>
+<li>Obeležja u <code>Lista_obeležja</code> <strong>mogu</strong> biti deklarisana kao <code>NOT NULL</code>, ali ne moraju (NOT NULL obeležja se eksplicitno deklarišu).</li>
+<li>Proverava se prilikom svakog pokušaja upisa/modifikacije vrednosti obeležja iz liste.</li>
+<li>Jedina moguća aktivnost pri narušavanju: <strong>NO ACTION</strong>.</li>
+<li>Svi savremeni SUBP podržavaju <code>UNIQUE</code>.</li>
+<li>Kod nekih SUBP, kontrola ovog ograničenja <strong>nije u skladu</strong> sa teoretski definisanim pravilom interpretacije (npr. tretman NULL vrednosti).</li>
+</ul>
+<hr>
+<h2 id="check-logičkiizraz">CHECK (LogičkiIzraz)</h2>
+<ul>
+<li>Zadaje se:
+<ul>
+<li><strong>na nivou obeležja</strong> šeme relacije koje je jedino upotrebljeno u <code>LogičkomIzrazu</code>, ili</li>
+<li><strong>na nivou celokupne šeme relacije</strong> (tabele) – obavezno kada <code>LogičkiIzraz</code> obuhvata više od jednog obeležja (uobičajeno i opštije rešenje)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Zadavanje na nivou obeležja:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">CHECK</span> <span class="token punctuation">(</span>LogičkiIzraz<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span> <span class="token keyword">CHECK</span> <span class="token punctuation">(</span>LogičkiIzraz<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Zadavanje na nivou šeme relacije:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span>
+  lista specifikacija kolona tabele<span class="token punctuation">,</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">CHECK</span> <span class="token punctuation">(</span>LogičkiIzraz<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<ul>
+<li>Obeležja upotrebljena u <code>LogičkomIzrazu</code>:
+<ul>
+<li>mogu biti deklarisana kao <code>NOT NULL</code>, a ne moraju</li>
+<li>mogu pripadati skupu obeležja date šeme relacije (uobičajeno), a ne moraju</li>
+<li>dozvoljeno je da <code>LogičkiIzraz</code> poziva prethodno isprogramirane funkcije, u kojima se mogu koristiti obeležja <strong>drugih</strong> šema relacija</li>
+</ul>
+</li>
+<li>Konkretni SUBP, uobičajeno, <strong>ne dozvoljavaju</strong> da <code>LogičkiIzraz</code> sadrži:
+<ul>
+<li>obeležja iz drugih šema relacija</li>
+<li>podupite (<code>SELECT</code>)</li>
+<li>funkcije koje bi narušavale prethodna dva pravila</li>
+</ul>
+</li>
+<li><code>LogičkiIzraz</code> mora biti izračunljiv za <strong>svaku torku</strong> relacije nad datom šemom.</li>
+<li>Moguće vrednosti izračunatog <code>LogičkogIzraza</code>: <strong>TRUE</strong>, <strong>FALSE</strong>, ili <strong>NULL</strong>.</li>
+<li>Proverava se prilikom svakog pokušaja:
+<ul>
+<li>upisa nove torke u relaciju, ili</li>
+<li>modifikacije postojeće vrednosti obeležja obuhvaćenog zadatim logičkim izrazom</li>
+</ul>
+</li>
+<li>Ograničenje:
+<ul>
+<li><strong>jeste narušeno</strong> kada je rezultat logičkog izraza <strong>FALSE</strong></li>
+<li><strong>nije narušeno</strong> kada je rezultat <strong>TRUE</strong>, ili <strong>NULL</strong></li>
+</ul>
+</li>
+<li>Jedina moguća aktivnost pri narušavanju: <strong>NO ACTION</strong>.</li>
+</ul>
+<hr>
+<h2 id="foreign-key">FOREIGN KEY</h2>
+<p><strong>Opšti oblik sintakse:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">FOREIGN</span> <span class="token keyword">KEY</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>ListaObeležja<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token keyword">REFERENCES</span> NazivRefŠR <span class="token punctuation">[</span><span class="token punctuation">(</span>ListaRefObeležja<span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">MATCH</span> { <span class="token keyword">FULL</span> <span class="token operator">|</span> <span class="token keyword">PARTIAL</span> }<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">ON</span> <span class="token keyword">DELETE</span> {<span class="token keyword">NO</span> <span class="token keyword">ACTION</span> <span class="token operator">|</span> <span class="token keyword">CASCADE</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token keyword">DEFAULT</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">ON</span> <span class="token keyword">UPDATE</span> {<span class="token keyword">NO</span> <span class="token keyword">ACTION</span> <span class="token operator">|</span> <span class="token keyword">CASCADE</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token keyword">DEFAULT</span> <span class="token operator">|</span> <span class="token keyword">SET</span> <span class="token boolean">NULL</span>}<span class="token punctuation">]</span>
+</code></pre>
+<ul>
+<li>
+<p>Deklariše se u <strong>referencirajućoj</strong> šemi relacije.</p>
+</li>
+<li>
+<p><code>NazivRefŠR</code> – naziv referencirane šeme relacije.</p>
+</li>
+<li>
+<p><code>ListaObeležja</code> – lista obeležja stranog ključa u referencirajućoj šemi relacije.</p>
+</li>
+<li>
+<p><code>ListaRefObeležja</code> – lista obeležja u referenciranoj šemi relacije; može se izostaviti kada se navodi primarni ključ.</p>
+</li>
+<li>
+<p>Zadaje se:</p>
+<ul>
+<li><strong>na nivou obeležja</strong> šeme relacije koje jedino predstavlja strani ključ – bez navođenja liste obeležja, ili</li>
+<li><strong>na nivou celokupne šeme relacije</strong> (tabele) – sa navođenjem liste obeležja (uobičajeno i opštije rešenje)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Zadavanje na nivou obeležja:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span>
+  Kolona Tip<span class="token punctuation">(</span>Dužina<span class="token punctuation">)</span>
+    <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">FOREIGN</span> <span class="token keyword">KEY</span> <span class="token keyword">REFERENCES</span> ŠemaRel<span class="token punctuation">(</span>ListaOb<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Zadavanje na nivou šeme relacije:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token punctuation">(</span>
+  lista specifikacija kolona tabele<span class="token punctuation">,</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  <span class="token keyword">CONSTRAINT</span> Naziv <span class="token keyword">FOREIGN</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span>Lista_obeležja<span class="token punctuation">)</span>
+    <span class="token keyword">REFERENCES</span> NazivRefŠR <span class="token punctuation">(</span>ListaRefObeležja<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre>
+<h3 id="not-null-kod-listaobeležja--listarefobeležja">NOT NULL kod ListaObeležja / ListaRefObeležja</h3>
+<ul>
+<li>Obeležja u <code>ListaObeležja</code> mogu biti deklarisana kao <code>NOT NULL</code>, a ne moraju.</li>
+<li>Obeležja u <code>ListaRefObeležja</code> mogu biti deklarisana kao <code>NOT NULL</code>, a ne moraju.</li>
+<li><code>ListaObeležja</code> definiše <strong>strani ključ</strong> u referencirajućoj šemi relacije.</li>
+</ul>
+<h3 id="šta-može-predstavljati-listarefobeležja">Šta može predstavljati ListaRefObeležja</h3>
+<p><code>ListaRefObeležja</code> definiše niz obeležja <strong>Y</strong> koji u referenciranoj šemi relacije može predstavljati:</p>
+<ul>
+<li><strong>primarni ključ</strong> (<code>Key(Nj, Y)</code>, <code>Y = Kp(Rj)</code>)</li>
+<li><strong>alternativni ključ</strong> (<code>Key(Nj, Y)</code>, <code>Y ≠ Kp(Rj)</code>)</li>
+<li>skup obeležja s definisanim ograničenjem jedinstvenosti (<code>Unique(Nj, Y)</code>), ili</li>
+<li>bilo koji niz obeležja, domenski kompatibilan sa nizom obeležja <code>ListaObeležja</code></li>
+</ul>
+<blockquote>
+<p>Većina proizvođača SUBP zahteva da <code>ListaRefObeležja</code> definiše niz Y takav da važi <code>Key(Nj, Y)</code>, ili <code>Unique(Nj, Y)</code>.</p>
+</blockquote>
+<h3 id="kada-se-ograničenje-proverava">Kada se ograničenje proverava</h3>
+<p>Ograničenje se proverava prilikom svakog pokušaja:</p>
+<ul>
+<li>upisa nove torke u <strong>referencirajuću</strong> relaciju</li>
+<li>modifikacije vrednosti stranog ključa, datog putem <code>ListaObeležja</code></li>
+<li>brisanja postojeće torke iz <strong>referencirane</strong> relacije</li>
+<li>modifikacije vrednosti obeležja, sadržanih u <code>ListaRefObeležja</code></li>
+</ul>
+<h3 id="akcije-po-vrsti-operacije">Akcije po vrsti operacije</h3>
+
+<table>
+<thead>
+<tr>
+<th>Operacija</th>
+<th>Moguća akcija</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Upis nove torke u referencirajuću relaciju</td>
+<td>jedino <strong>NO ACTION</strong></td>
+</tr>
+<tr>
+<td>Modifikacija vrednosti stranog ključa (<code>ListaObeležja</code>)</td>
+<td>jedino <strong>NO ACTION</strong></td>
+</tr>
+<tr>
+<td>Brisanje postojeće torke iz referencirane relacije</td>
+<td><code>ON DELETE {NO ACTION \| CASCADE \| SET DEFAULT \| SET NULL}</code> (podrazumevano <strong>NO ACTION</strong>)</td>
+</tr>
+<tr>
+<td>Modifikacija vrednosti obeležja u <code>ListaRefObeležja</code></td>
+<td><code>ON UPDATE {NO ACTION \| CASCADE \| SET DEFAULT \| SET NULL}</code> (podrazumevano <strong>NO ACTION</strong>)</td>
+</tr>
+</tbody>
+</table><blockquote>
+<p>Dakle: samo za operacije <strong>nad referenciranom relacijom</strong> (DELETE / UPDATE referenciranih obeležja) postoji izbor između sve četiri akcije, putem <code>ON DELETE</code> / <code>ON UPDATE</code>. Za operacije nad referencirajućom relacijom (INSERT nove torke, UPDATE stranog ključa), jedina moguća akcija je <strong>NO ACTION</strong>.</p>
+</blockquote>
+<hr>
+<h2 id="proceduralni-mehanizmi-1">Proceduralni mehanizmi</h2>
+<p>Tri glavna proceduralna mehanizma:</p>
+<ul>
+<li><strong>Okidači (trigeri)</strong> – <code>CREATE TRIGGER</code></li>
+<li><strong>Procedure i funkcije baze podataka</strong> – <code>CREATE PROCEDURE</code>, <code>CREATE FUNCTION</code></li>
+<li><strong>Paketi baze podataka</strong> – <code>CREATE PACKAGE</code>, <code>CREATE PACKAGE BODY</code></li>
+</ul>
+<h3 id="standardizacija">Standardizacija</h3>
+<ul>
+<li>Ne postoji standardna sintaksa za njihovo <strong>kompletno</strong> specificiranje.</li>
+<li>SQL:2006 propisuje standard za <strong>deklarisanje</strong> trigera, procedura i funkcija, ali <strong>ne postoji standard</strong> za specifikaciju proceduralnog dela.</li>
+<li>Postojeći SUBP podržavaju sopstvene jezike i koncepte:
+<ul>
+<li><strong>Oracle</strong> → PL/SQL</li>
+<li><strong>Microsoft SQL Server</strong> → Transact-SQL (T-SQL)</li>
+</ul>
+</li>
+<li>Za pakete baze podataka takođe <strong>ne postoji</strong> standardna sintaksa specificiranja.</li>
+</ul>
+<hr>
+<h2 id="specifikacija-trigera">Specifikacija trigera</h2>
+<p>Komponente specifikacije trigera:</p>
+<ul>
+<li><strong>Oblast aktiviranja</strong> – tabela (ili pogled) nad kojom se triger definiše</li>
+<li><strong>Specifikacija operacija</strong> koje ga pokreću</li>
+<li><strong>Uslovi</strong> pod kojima se triger aktivira</li>
+<li><strong>Vreme aktiviranja</strong> – neposredno pre ili posle same operacije</li>
+<li><strong>Frekvencija aktiviranja</strong>:
+<ul>
+<li>jednom za celu operaciju, ili</li>
+<li>za svaku torku, koja je predmet operacije, pojedinačno</li>
+</ul>
+</li>
+<li><strong>Aktivnost (procedura)</strong> koju triger treba da realizuje</li>
+</ul>
+<h3 id="aktiviranje-trigera">Aktiviranje trigera</h3>
+<ul>
+<li>Aktivira se <strong>automatski</strong>, prilikom izvođenja operacije koja može da pokrene triger.</li>
+<li>Ako su ostvareni specificirani uslovi za aktiviranje, izvodi se specificirana aktivnost trigera.</li>
+<li><strong>Aktiviranje trigera se ne može izbeći voljom korisnika.</strong></li>
+</ul>
+<hr>
+<h2 id="dml-trigeri-–-komponente">DML trigeri – komponente</h2>
+<h3 id="oblast-definisanosti">Oblast definisanosti</h3>
+<ul>
+<li>jedna <strong>tabela</strong>, ili</li>
+<li>jedan <strong>pogled</strong></li>
+</ul>
+<h3 id="vreme-okidanja">Vreme okidanja</h3>
+
+<table>
+<thead>
+<tr>
+<th>Vreme</th>
+<th>Značenje</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BEFORE</code></td>
+<td>neposredno pre akcije naredbe</td>
+</tr>
+<tr>
+<td><code>AFTER</code></td>
+<td>neposredno nakon akcije naredbe</td>
+</tr>
+<tr>
+<td><code>INSTEAD OF</code></td>
+<td>umesto same akcije naredbe (samo za poglede)</td>
+</tr>
+</tbody>
+</table><h3 id="pokretači-trigera">Pokretači trigera</h3>
+<ul>
+<li><code>INSERT</code></li>
+<li><code>UPDATE [OF lista_kolona]</code></li>
+<li><code>DELETE</code></li>
+</ul>
+<h3 id="frekvencija-aktiviranja-tip-trigera">Frekvencija aktiviranja (tip trigera)</h3>
+
+<table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Row Level Trigger</strong> – <code>FOR EACH ROW</code></td>
+<td>aktivira se za svaku torku koja je predmet DML naredbe; dodatno može imati logički uslov pokretanja</td>
+</tr>
+<tr>
+<td><strong>Statement Level Trigger</strong></td>
+<td>aktivira se jednom za DML naredbu u celini</td>
+</tr>
+</tbody>
+</table><ul>
+<li>Aktivnost (procedura – PL/SQL blok) koju triger realizuje, kada je pokrenut.</li>
+</ul>
+<hr>
+<h2 id="oblikovanje-trigera-baze-podataka">Oblikovanje trigera baze podataka</h2>
+<p><strong>Opšti oblik sintakse:</strong></p>
+<pre class=" language-sql"><code class="prism  language-sql"><span class="token keyword">CREATE</span> <span class="token punctuation">[</span><span class="token operator">OR</span> REPLACE<span class="token punctuation">]</span> <span class="token keyword">TRIGGER</span> Naziv_Trigera
+BEFORE <span class="token operator">|</span> <span class="token keyword">AFTER</span> <span class="token operator">|</span> INSTEAD <span class="token keyword">OF</span>
+<span class="token keyword">INSERT</span> <span class="token operator">|</span> <span class="token keyword">DELETE</span> <span class="token operator">|</span> <span class="token keyword">UPDATE</span> <span class="token punctuation">[</span><span class="token keyword">OF</span> ListaObeležja<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token operator">OR</span> <span class="token keyword">INSERT</span> <span class="token operator">|</span> <span class="token keyword">DELETE</span> <span class="token operator">|</span> <span class="token keyword">UPDATE</span> <span class="token punctuation">[</span><span class="token keyword">OF</span> ListaObeležja<span class="token punctuation">]</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+<span class="token keyword">ON</span> Naziv_Tabele
+<span class="token punctuation">[</span><span class="token keyword">FOR EACH ROW</span> <span class="token punctuation">[</span><span class="token keyword">WHEN</span> <span class="token punctuation">(</span>LogičkiUslovPokretanjaTrigera<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+<span class="token punctuation">[</span>REFERENCING OLD <span class="token keyword">AS</span> NazivOld NEW <span class="token keyword">AS</span> NazivNew<span class="token punctuation">]</span>
+<span class="token punctuation">[</span><span class="token keyword">DECLARE</span>
+  Deklarativni_deo  <span class="token comment">-- lokalne deklaracije</span>
+<span class="token punctuation">]</span>
+<span class="token keyword">BEGIN</span>
+  Izvršni_deo        <span class="token comment">-- proceduralni deo, specifikacija aktivnosti</span>
+<span class="token punctuation">[</span>EXCEPTION Deo_za_obradu_izuzetaka  <span class="token comment">-- naredbe oblika WHEN...THEN]</span>
+<span class="token keyword">END</span> <span class="token punctuation">[</span>Naziv_Trigera<span class="token punctuation">]</span><span class="token punctuation">;</span>
+</code></pre>
+<h3 id="referenciranje-predmetnih-podataka-u-row-level-trigerima">Referenciranje predmetnih podataka u Row Level trigerima</h3>
+<p>Podaci koji su predmet pokretačke DML naredbe mogu biti referencirani unutar tela trigera:</p>
+<ul>
+<li><strong><code>:OLD.naziv_kolone</code></strong> – “stara” vrednost kolone (<em>before image</em>)
+<ul>
+<li>ima smisla u slučaju pokretačke <code>UPDATE</code> ili <code>DELETE</code> naredbe</li>
+</ul>
+</li>
+<li><strong><code>:NEW.naziv_kolone</code></strong> – “nova” vrednost kolone (<em>after image</em>)
+<ul>
+<li>ima smisla u slučaju pokretačke <code>UPDATE</code> ili <code>INSERT</code> naredbe</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="procedure-i-funkcije">Procedure i funkcije</h2>
+<ul>
+<li>Proceduralno specificirani programi, definisani na nivou SUBP.</li>
+<li><strong>Pozivaju se po potrebi</strong> – ne aktiviraju se automatski (za razliku od trigera).</li>
+<li>Čuvaju se u <strong>izvornom</strong> i <strong>kompajliranom, optimizovanom</strong> obliku.</li>
+<li>Pozivaju se <strong>iz trigera</strong>, ili <strong>direktno iz korisničkih programa</strong>.</li>
+</ul>
+<hr>
+<h2 id="kratak-rezime-za-ispit">Kratak rezime za ispit</h2>
+<ul>
+<li>Mehanizmi RSUBP služe za implementaciju: šema relacija, ograničenja (integriteta) i pravila poslovanja koja nisu ograničenja.</li>
+<li>Implementacija skupa šema relacija: <code>CREATE/ALTER/DROP DOMAIN</code>, <code>CREATE/DROP TYPE</code>, <code>CREATE/ALTER/DROP TABLE</code>.</li>
+<li><strong>Deklarativni</strong> mehanizmi → podrazumevano ponašanje, bez pisanja procedura (<code>CONSTRAINT</code>, <code>CREATE DOMAIN</code>, <code>CREATE ASSERTION</code>).</li>
+<li><strong>Proceduralni</strong> mehanizmi → ručno programiranje kontrole (<code>TRIGGER</code>, <code>PROCEDURE</code>, <code>FUNCTION</code>, <code>PACKAGE</code>); koriste se i za pravila poslovanja koja nisu ograničenja šeme; nema pun SQL standard za proceduralni deo (Oracle: PL/SQL, MS SQL Server: T-SQL).</li>
+<li><code>CONSTRAINT</code> specifikacije: <code>NOT NULL</code>, <code>PRIMARY KEY</code>, <code>UNIQUE</code>, <code>CHECK</code>, <code>FOREIGN KEY</code>.</li>
+<li>Za <code>NOT NULL</code>, <code>PRIMARY KEY</code>, <code>UNIQUE</code>, <code>CHECK</code> – jedina akcija pri narušavanju je <strong>NO ACTION</strong> (odbijanje operacije).</li>
+<li><code>FOREIGN KEY</code>:
+<ul>
+<li>upis nove torke u referencirajuću relaciju i modifikacija stranog ključa → jedino <strong>NO ACTION</strong></li>
+<li>brisanje torke iz referencirane relacije → <code>ON DELETE</code> (NO ACTION/CASCADE/SET NULL/SET DEFAULT)</li>
+<li>modifikacija referenciranih obeležja → <code>ON UPDATE</code> (NO ACTION/CASCADE/SET NULL/SET DEFAULT)</li>
+<li>podrazumevana akcija za oba je <strong>NO ACTION</strong></li>
+</ul>
+</li>
+<li><code>PRIMARY KEY</code> implicitno povlači <code>NOT NULL</code> za sva obeležja u listi; <code>UNIQUE</code> to ne zahteva.</li>
+<li><strong>Trigeri</strong>: aktiviraju se automatski (ne mogu se izbeći), imaju vreme okidanja (<code>BEFORE</code>/<code>AFTER</code>/<code>INSTEAD OF</code>), pokretače (<code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>) i frekvenciju (<code>FOR EACH ROW</code> – Row Level, ili Statement Level). <code>INSTEAD OF</code> postoji samo za poglede.</li>
+<li>Unutar Row Level trigera: <code>:OLD</code> = stara vrednost (UPDATE/DELETE), <code>:NEW</code> = nova vrednost (UPDATE/INSERT).</li>
+<li><strong>Procedure i funkcije</strong>: pozivaju se eksplicitno (iz trigera ili programa), ne aktiviraju se automatski; čuvaju se u izvornom i kompajliranom obliku.</li>
+</ul>
+
+    </div>
+  </div>
+</body>
+
+</html>
